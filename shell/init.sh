@@ -20,15 +20,13 @@ docker-engine-selinux \
 docker-engine
 
 # 设置 yum repository
-yum install -y yum-utils \
-device-mapper-persistent-data \
-lvm2
+yum install -y yum-utils device-mapper-persistent-data lvm2
 yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 
 # 安装 containerd.io
-if [ ! -d "/mnt/tool/containerd.io-1.2.10-3.2.el7.x86_64.rpm" ]
+if [ ! -d "/mnt/k8s/containerd.io-1.2.10-3.2.el7.x86_64.rpm" ]
 then
-	yum install -y /mnt/tool/containerd.io-1.2.10-3.2.el7.x86_64.rpm
+	yum install -y /mnt/k8s/containerd.io-1.2.10-3.2.el7.x86_64.rpm
 else
 	yum install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.10-3.2.el7.x86_64.rpm
 fi
@@ -37,10 +35,8 @@ yum install -y docker-ce docker-ce-cli
 systemctl enable docker
 systemctl start docker
 
-# 安装 nfs-utils
-# 必须先安装 nfs-utils 才能挂载 nfs 网络存储
+# 安装 nfs-utils 才能挂载 nfs 网络存储
 yum install -y nfs-utils
-# yum install -y wget
 
 # 关闭 防火墙
 systemctl stop firewalld

@@ -4,6 +4,7 @@
 # 替换 x.x.x.x 为 master 节点的内网IP
 # export 命令只在当前 shell 会话中有效，开启新的 shell 窗口后，如果要继续安装过程，请重新执行此处的 export 命令
 MASTER_IP=$1
+VERSION=1.17.3
 # 替换 apiserver.demo 为 您想要的 dnsName
 APISERVER_NAME=apiserver
 # Kubernetes 容器组所在的网段，该网段安装完成后，由 kubernetes 创建，事先并不存在于您的物理网络中
@@ -26,7 +27,7 @@ rm -f ./kubeadm-config.yaml
 cat <<EOF > ./kubeadm-config.yaml
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
-kubernetesVersion: v1.17.0
+kubernetesVersion: "v${VERSION}"
 imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
 controlPlaneEndpoint: "${APISERVER_NAME}:6443"
 networking:
