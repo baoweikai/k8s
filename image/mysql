@@ -1,0 +1,28 @@
+# 基于php:alpine创建镜像,可自行替换centos或其他
+FROM php:fpm-alpine
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories # 修改软件源为阿里云镜像
+RUN apk update && apk upgrade && apk add g++ gcc make cmake #更新管理包并安装基础库
+# RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" # 配置文件
+# COPY config/opcache.ini $PHP_INI_DIR/conf.d/  # 缓存配置
+RUN curl -fsSL 'https://pecl.php.net/get/redis-5.1.1.tgz' -o mysql.tar.gz \
+    && mkdir -p /tmp/mysql \
+    && tar -xf mysql.tar.gz -C /tmp/mysql --strip-components=1 \
+    && rm mysql.tar.gz
+RUN cmake ./mysql-8.0.18 -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+    -DDEFAULT_CHARSET=utf8 \
+    -DDEFAULT_COLLATION=utf8_general_ci \
+    -DENABLED_LOCAL_INFILE=ON \
+    -DWITH_INNODB_MEMCACHED=ON \
+    -DWITH_SSL=system \
+    -DWITH_INNOBASE_STORAGE_ENGINE=1 \
+    -DWITH_FEDERATED_STORAGE_ENGINE=1 \
+    -DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+    -DWITH_ARCHIVE_STORAGE_ENGINE=1 \
+    -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+    -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
+    -DCOMPILATION_COMMENT="zsd edition" \
+    -DFORCE_INSOURCE_BUILD=1 \
+    -DDOWNLOAD_BOOST=1 \
+    -DWITH_BOOST=/tmp \
+    -DMYSQL_UNIX_ADDR=/var/run/mysql/mysql.sock
+RUN rm -rf /tmp/mysql

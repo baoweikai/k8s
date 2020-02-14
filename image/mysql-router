@@ -1,0 +1,13 @@
+# 基于openjdk8创建镜像,可自行替换centos
+
+FROM centos
+MAINTAINER <kugua mateng100@126.com>
+LABEL Description="mysql-router"
+COPY innodb/mysql-router-community-8.0.18-1.el8.x86_64.rpm /tmp/
+COPY innodb/mysql-shell-8.0.18-1.el8.x86_64.rpm /tmp/
+RUN yum update -y
+RUN yum install -y python3 \
+&& rpm -ivh /tmp/mysql-router-community-8.0.18-1.el8.x86_64.rpm \
+&& rpm -ivh /tmp/mysql-shell-8.0.18-1.el8.x86_64.rpm \
+&& rm -f /tmp/mysql-router-community-8.0.18-1.el8.x86_64.rpm /tmp/mysql-shell-8.0.18-1.el8.x86_64.rpm
+# CMD ["mysqlrouter","console"]

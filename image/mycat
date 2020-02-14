@@ -1,0 +1,22 @@
+#基于openjdk8创建镜像,可自行替换centos
+
+FROM java:8-jre
+MAINTAINER <liuwel liuwel@live.com>
+LABEL Description="mycat读写分离"
+ENV mycat-version Mycat-server-1.6.7.3
+# USER root
+ADD Mycat-server-1.6.7.3.tar.gz /tmp
+# RUN tar -zxf /tmp/Mycat-server-1.6.7.3.tar.gz -C /usr/local
+ENV MYCAT_HOME=/usr/local/mycat
+ENV PATH=$PATH:$MYCAT_HOME/bin
+WORKDIR $MYCAT_HOME/bin
+# RUN chmod -R 777 /usr/local/mycat
+EXPOSE 8066 9066
+CMD ["mycat","console"]
+
+
+#将mycat解压到/usr/local目录中,得到 /usr/local/mycat
+#将mycat的配置文件的地址暴露出映射地址,启动时直接映射宿主机的文件夹
+#设置MYCAT_HOME
+#暴露出MyCat的所需端口
+#以前台进程的方式启动MyCat服务
