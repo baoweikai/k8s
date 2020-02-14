@@ -1,0 +1,158 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  namespace: kube-system
+  name: traefik-config
+data:
+  traefik.yaml: |-
+    ping: ""                    ## 启用 Ping
+    serversTransport:
+      insecureSkipVerify: true  ## Traefik 忽略验证代理服务的 TLS 证书
+    api:
+      insecure: true            ## 允许 HTTP 方式访问 API
+      dashboard: true           ## 启用 Dashboard
+      debug: false              ## 启用 Debug 调试模式
+    metrics:
+      prometheus: ""            ## 配置 Prometheus 监控指标数据，并使用默认配置
+    entryPoints:                ## 入口点
+      http:
+        address: ":80"          ## 配置 80 端口，并设置入口名称为 http
+      https:
+        address: ":443"         ## 配置 443 端口，并设置入口名称为 https
+      php:
+        address: ":9000"        ## 配置 9000 端口，并设置入口名称为 php
+      mysql:
+        address: ":3306"        ## 配置 3306 端口，并设置入口名称为 mysql
+      redis:
+        address: ":6379"        ## 配置 6379 端口，并设置入口名称为 redis
+      mongo:
+        address: ":27017"       ## 配置 27017 端口，并设置入口名称为 mongo
+    providers:
+      kubernetesCRD: ""         ## 启用 Kubernetes CRD 方式来配置路由规则
+      kubernetesIngress: ""     ## 启动 Kubernetes Ingress 方式来配置路由规则
+    log:
+      filePath: ""              ## 设置调试日志文件存储路径，如果为空则输出到控制台
+      level: error              ## 设置调试日志级别
+      format: json              ## 设置调试日志格式
+    accessLog:
+      filePath: ""              ## 设置访问日志文件存储路径，如果为空则输出到控制台
+      format: json              ## 设置访问调试日志格式
+      bufferingSize: 0          ## 设置访问日志缓存行数
+      filters:
+        #statusCodes: ["200"]   ## 设置只保留指定状态码范围内的访问日志
+        retryAttempts: true     ## 设置代理访问重试失败时，保留访问日志
+        minDuration: 20         ## 设置保留请求时间超过指定持续时间的访问日志
+      fields:                   ## 设置访问日志中的字段是否保留（keep 保留、drop 不保留）
+        defaultMode: keep       ## 设置默认保留访问日志字段
+        names:                  ## 针对访问日志特别字段特别配置保留模式
+          ClientUsername: drop  
+        headers:                ## 设置 Header 中字段是否保留
+          defaultMode: keep     ## 设置默认保留 Header 中字段
+          names:                ## 针对 Header 中特别字段特别配置保留模式
+            User-Agent: redact
+            Authorization: drop
+            Content-Type: keep
+# 服务
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kube-system
+  name: traefik
+spec:
+  ports:
+    #- name: http
+    #  port: 80
+    #- name: https
+    #  port: 443
+    - name: admin
+      port: 8080
+  selector:
+    app: traefik
+# traefik守护进程
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: kube-system
+  name: traefik-ingress-controller
+  labels:
+    app: traefik
+spec:
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      name: traefik
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      terminationGracePeriodSeconds: 1
+      containers:
+        - image: traefik:latest
+          name: traefik-ingress-lb
+          ports:
+            - name: http
+              containerPort: 80
+              hostPort: 80          ## 将容器端口绑定所在服务器的 80 端口
+            - name: https
+              containerPort: 443
+              hostPort: 443         ## 将容器端口绑定所在服务器的 443 端口
+            - name: php
+              containerPort: 9000
+              hostPort: 9000        ## 将容器端口绑定所在服务器的 9000 端口
+            - name: mysql
+              containerPort: 3306
+              hostPort: 3306        ## 将容器端口绑定所在服务器的 3306 端口
+            - name: redis
+              containerPort: 6379
+              hostPort: 6379        ## 将容器端口绑定所在服务器的 6379 端口
+            - name: mongo
+              containerPort: 27017
+              hostPort: 27017       ## 将容器端口绑定所在服务器的 27017 端口
+            - name: admin
+              containerPort: 8080   ## Traefik Dashboard
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 1024Mi
+            requests:
+              cpu: 1000m
+              memory: 1024Mi
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          args:
+            - --configfile=/config/traefik.yaml
+          volumeMounts:
+            - mountPath: "/config"
+              name: "config"
+      volumes:
+        - name: config
+          configMap:
+            name: traefik-config 
+      tolerations:              ## 设置容忍所有污点，防止节点被设置污点
+        - operator: "Exists"
+      nodeSelector:             ## 设置node筛选器，在特定label的节点上启动
+        IngressProxy: "true"
+# 入口路由
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  namespace: kube-system
+  name: traefik-route
+spec:
+  entryPoints:
+    - http
+  routes:
+    - match: Host(`traefik.lc.com`) ## traefik后台
+      kind: Rule
+      services:
+        - name: traefik
+          port: 8080

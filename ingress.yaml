@@ -1,0 +1,33 @@
+# https路由
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  namespace: kube-system
+  name: https-route
+spec:
+  entryPoints:
+    - https
+  tls:
+    secretName: lc-tls
+  routes:
+    - match: Host(`lc.com`) # 首页
+      kind: Rule
+      services:
+        - name: php
+          port: 80
+    - match: Host(`apim.lc.com`) # 前台接口
+      kind: Rule
+      services:
+        - name: php
+          port: 80
+    - match: Host(`b.lc.com`) # 首页
+      kind: Rule
+      services:
+        - name: php
+          port: 80
+    - match: Host(`apia.lc.com`) # 后台接口
+      kind: Rule
+      services:
+        - name: php
+          port: 80

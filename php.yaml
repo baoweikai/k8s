@@ -1,0 +1,62 @@
+# 名称空间
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lnmp
+# 内部服务端口
+apiVersion: v1
+kind: Service
+metadata:
+  name: php
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  ports:
+    - port: 9000 # 容器端口
+      protocol: TCP
+      targetPort: 9000 # 应用端口
+  selector:
+    app: app-php
+---
+apiVersion: apps/v1 # version
+kind: Deployment
+metadata:
+  name: php
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-php
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: app-php
+    spec:
+      containers:
+        - name: php
+          image: registry.cn-beijing.aliyuncs.com/baoweikai/php:latest # 自定义镜像
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9000
+              name: php
+          volumeMounts:
+            - name: php
+              mountPath: /var/www/html
+            - name: php-ini
+              mountPath: /usr/local/etc/php/php.ini
+          ##拉取镜像时的用户认证,没有的时候注释掉这2行
+          #imagePullSecrets:
+          #- name: registrypullsecret
+      volumes:
+        - name: php
+          hostPath:
+            path: /mnt/www
+        - name: php-ini
+          hostPath:
+            path: /mnt/tool/etc/php/php.ini

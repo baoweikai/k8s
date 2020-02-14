@@ -1,0 +1,148 @@
+#server {
+   #listen       80; #监听端口
+   #server_name  *.lc.com lc.com; #请求域
+   #return 301 https://$host:443; #重定向至https访问。
+#}
+
+server {
+    listen 443 ssl;
+    # gzip config
+
+    server_name lc.com www.lc.com;
+    root "/usr/share/nginx/html/lc/api/public";
+    index index.html index.htm;
+
+    #ssl_certificate "/etc/nginx/conf.d/ssl/laragon.crt";
+    #ssl_certificate_key "/etc/nginx/conf.d/ssl/laragon.key";
+    #ssl_session_timeout 5m;
+    #ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    #ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv3:+EXP;
+    #ssl_prefer_server_ciphers on;
+
+    location / {
+        # 用于配合 browserHistory 使用
+        try_files $uri $uri/ pages/$uri pages/$uri/ /index.html;
+
+        # 如果有资源，建议使用 https + http2，配合按需加载可以获得更好的体验
+        #rewrite ^/(.*)$ https://apia.lc.com/$1 permanent;
+    }
+
+    location /api {
+        rewrite ^/(.*) https://apim.lc.com/$1 permanent;
+        #proxy_pass https://apim.lc.com/;
+        #proxy_set_header   X-Forwarded-Proto $scheme;
+        #proxy_set_header   Host              $host;
+        #proxy_set_header   X-Real-IP         $remote_addr;
+        #proxy_set_header X-Real-Port $remote_port;
+        #proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /image {
+        rewrite ^/(.*) https://s.lc.com/$1 permanent;
+        #proxy_pass https://s.lc.com;
+        #proxy_set_header   X-Forwarded-Proto $scheme;
+        #proxy_set_header   Host              $http_host;
+        #proxy_set_header   X-Real-IP         $remote_addr;
+    }
+}
+
+server {
+    listen 443 ssl;
+    # gzip config
+
+    server_name apim.lc.com *.apim.lc.com;
+    root "/usr/share/nginx/html/lc/api/public";
+    index app.php;
+
+    ssl_certificate "/etc/nginx/conf.d/ssl/laragon.crt";
+    ssl_certificate_key "/etc/nginx/conf.d/ssl/laragon.key";
+    ssl_session_timeout 5m;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv3:+EXP;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        if (!-e $request_filename) {
+            rewrite ^(.*)$ /app.php?s=/$1 last;
+            break;
+        }
+    }
+
+    location ~ [^/]\.php(/|$) {
+        fastcgi_pass   php:9000;
+        fastcgi_index  app.php;
+        fastcgi_param  SCRIPT_FILENAME  /var/www/html/lc/api/public$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+}
+
+server {
+    listen 443 ssl;
+    # gzip config
+
+    server_name apia.lc.com *.apia.lc.com;
+    root "/usr/share/nginx/html/lc/api/public";
+    index admin.php;
+
+    ssl_certificate "/etc/nginx/conf.d/ssl/laragon.crt";
+    ssl_certificate_key "/etc/nginx/conf.d/ssl/laragon.key";
+    ssl_session_timeout 5m;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv3:+EXP;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        if (!-e $request_filename) {
+            rewrite ^(.*)$ /admin.php?s=/$1 last;
+            break;
+        }
+    }
+
+    location ~ [^/]\.php(/|$) {
+        fastcgi_pass   php:9000;
+        fastcgi_index  admin.php;
+        fastcgi_param  SCRIPT_FILENAME  /var/www/html/lc/api/public$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+}
+
+server {
+    listen 443 ssl;
+    # gzip config
+
+    server_name b.lc.com *.b.lc.com;
+    root "/usr/share/nginx/html/lc/admin";
+    index index.html index.htm;
+
+    ssl_certificate "/etc/nginx/conf.d/ssl/laragon.crt";
+    ssl_certificate_key "/etc/nginx/conf.d/ssl/laragon.key";
+    ssl_session_timeout 5m;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv3:+EXP;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        # 用于配合 browserHistory 使用
+        try_files $uri $uri/ /index.html;
+
+        # 如果有资源，建议使用 https + http2，配合按需加载可以获得更好的体验
+        #rewrite ^/(.*)$ https://apia.lc.com/$1 permanent;
+    }
+
+    location /api {
+        rewrite ^/(.*) https://apia.lc.com/$1 permanent;
+        #proxy_pass https://apia.lc.com/;
+        #proxy_set_header   X-Forwarded-Proto $scheme;
+        #proxy_set_header   Host              $http_host;
+        #proxy_set_header   X-Real-IP         $remote_addr;
+    }
+
+    location /image {
+        rewrite ^/(.*) https://s.lc.com/$1 permanent;
+        #proxy_pass https://s.lc.com;
+        #proxy_set_header   X-Forwarded-Proto $scheme;
+        #proxy_set_header   Host              $http_host;
+        #proxy_set_header   X-Real-IP         $remote_addr;
+    }
+}
+

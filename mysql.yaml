@@ -1,0 +1,163 @@
+## 配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql
+  namespace: lnmp
+  labels:
+    app: app
+data:
+  master.cnf: |-
+    # Apply this config only on the master.
+    [mysqld]
+    log-bin
+    log_bin_trust_function_creators=1
+    #关闭MySQL对创建存储函数实施的限制
+    lower_case_table_names=1
+    #设置大小写不敏感
+  slave.cnf: |-
+    # Apply this config only on slaves.
+    [mysqld]
+    super-read-only
+    #只读模式
+    log_bin_trust_function_creators=1
+## 储存类型
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: standard
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: app-mysql
+# mysql控制器
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  # minReadySeconds: 5
+  replicas: 2
+  updateStrategy:
+    type: RollingUpdate
+  serviceName: mysql
+  selector:
+    matchLabels:
+      app: app-mysql
+  volumeClaimTemplates: ## 储存卷声明模板
+  - metadata:
+      name: data
+      #annotations:
+        #volume.beta.kubernetes.io/storage-class: anything
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 5Gi
+  template:
+    metadata:
+      labels:
+        app: app-mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      initContainers:
+      - name: init-mysql
+        image: mysql 
+        command:
+        - bash
+        - "-c"
+        - |
+          set -ex
+          # Generate mysql server-id from pod ordinal index.
+          [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+          ordinal=${BASH_REMATCH[1]}
+          echo [mysqld] > /etc/mysql/conf.d/server-id.cnf
+          # Add an offset to avoid reserved server-id=0 value.
+          echo server-id=$((100 + $ordinal)) >> /etc/mysql/conf.d/server-id.cnf
+          echo report-host=mysql-$ordinal.mysql.lnmp.cluster.local >> /etc/mysql/conf.d/server-id.cnf
+          # Copy appropriate conf.d files from config-map to emptyDir
+          if [[ $ordinal -eq 0 ]]; then
+            cp /mnt/master.cnf /etc/mysql/conf.d/master.cnf
+          else
+            cp /mnt/slave.cnf /etc/mysql/conf.d/slave.cnf
+          fi
+        volumeMounts:
+        - name: config-map
+          mountPath: /mnt
+      containers:
+      - name: mysql
+        image: mysql
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: huaren830415
+        args: # mysql启动参数
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        # Remove after first replicas=1 create
+        # - --wsrep-new-cluster	#这里在执行的时候代表会创建新集群，新增节点的时候要注释掉
+        ports:
+        - name: mysql
+          protocol: TCP
+          containerPort: 3306
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: conf
+          mountPath: /etc/mysql/conf.d
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - "-c"
+            - MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
+            - mysql -h 127.0.0.1 -u root -e "SELECT 1"
+          initialDelaySeconds: 30 # 容器启动后第一次执行探测是需要等待多少秒
+          timeoutSeconds: 5 # 探测超时时间
+          successThreshold: 1 # 最少连续探测成功多少次才被认定为成功
+          failureThreshold: 3 # 最少连续探测失败多少次才被认定为失败
+        #imagePullSecrets:
+        # - name: registrypullsecret
+      volumes:
+      - name: config-map
+        configMap:
+          name: mysql
+      #- name: data
+      #  persistentVolumeClaim: # 持久卷
+      #    claimName: app-mysql
+      #  hostPath: # 指向本地文件
+      #    path: /var/lib/mysql
+## 入口路由
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  namespace: lnmp
+  name: mysql-route
+spec:
+  entryPoints:
+  - mysql
+  routes:
+  - match: Host(`mysql.lc.com`) # 首页
+    services:
+    - name: mysql
+      port: 3306

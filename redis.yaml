@@ -1,0 +1,70 @@
+# 内部端口服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: app-redis
+# redis控制器
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  # minReadySeconds: 5
+  replicas: 2
+  serviceName: redis
+  selector:
+    matchLabels:
+      app: app-redis
+  template:
+    metadata:
+      labels:
+        app: app-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:alpine
+          imagePullPolicy: IfNotPresent
+          #env:
+          #  - name: redis_ROOT_PASSWORD
+          #    value: huaren830415
+          ports:
+            - name: redis
+              protocol: TCP
+              containerPort: 6379
+          volumeMounts:
+            - name: conf
+              mountPath: /usr/local/etc/redis/redis.conf
+        #imagePullSecrets:
+        # - name: registrypullsecret
+      volumes:
+        - name: conf
+          hostPath: # 指向本地文件
+            path: /mnt/tool/etc/redis/redis.conf
+# 入口路由
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  namespace: lnmp
+  name: redis-route
+spec:
+  entryPoints:
+    - redis
+  routes:
+    - match: HostSNI(`*`) # 首页
+      services:
+        - name: redis
+          port: 6379
