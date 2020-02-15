@@ -21,13 +21,14 @@ Vagrant.configure("2") do |config|
 		sed -i '$a GATEWAY='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
 		sed -i '$a DNS1='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
 		sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-		sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config
+		## sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config
 		systemctl restart sshd
 		mkdir /mnt/k8s
 		mkdir /mnt/www
 		sed -i '$a //'$2'/www /mnt/www cifs username=Administrator,password=830415,rw,dir_mode=0777,file_mode=0777 0 0' /etc/fstab
 		sed -i '$a //'$2'/k8s /mnt/k8s cifs username=Administrator,password=830415 0 0' /etc/fstab
 		mount -a
+		echo -e "huaren830415" | passwd --stdin vagrant ## 重置密码
 		echo -e "huaren830415" | passwd --stdin root ## 重置密码
 		## systemctl restart network ## 重启网络配置
 	SCRIPT

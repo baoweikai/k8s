@@ -19,3 +19,8 @@ for worker in workers; do
 	/tmp/init.sh
 	logout # 退出当前机器
 done
+su << eof
+huaren830415
+eof
+
+su << "huaren830415\n"
