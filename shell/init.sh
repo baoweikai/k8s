@@ -33,7 +33,7 @@ fi
 # 安装并启动 docker
 yum install -y docker-ce docker-ce-cli
 systemctl enable docker
-systemctl start docker
+sudo systemctl start docker
 
 # 安装 nfs-utils 才能挂载 nfs 网络存储
 yum install -y nfs-utils
@@ -93,9 +93,9 @@ sed -i "s#^ExecStart=/usr/bin/dockerd.*#ExecStart=/usr/bin/dockerd -H fd:// --co
 # 如果您访问 https://hub.docker.io 速度非常稳定，亦可以跳过这个步骤
 curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
 
-# 重启 docker，并启动 kubelet
-systemctl daemon-reload
-systemctl restart docker
-systemctl enable kubelet && systemctl start kubelet
+## 重启 docker，并启动 kubelet
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+sudo systemctl enable kubelet && sudo systemctl start kubelet
 
-docker version
+## docker version
