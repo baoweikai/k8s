@@ -89,8 +89,6 @@ curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2
 
 ## 重启 docker，并启动 kubelet
 systemctl daemon-reload
-sudo systemctl restart docker
-systemctl enable kubelet && systemctl start kubelet
+systemctl restart docker && systemctl enable kubelet && systemctl start kubelet
 
-systemctl restart docker
 ## docker version

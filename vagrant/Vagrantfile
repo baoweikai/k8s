@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
 	# nmcli d reapply eth0
 	servers.each do |server_name, server_ip|
 		config.vm.define server_name, autostart: true do |server|
-            # server.vm.network "private_network", ip: "server_ip"
+            ## server.vm.network "private_network", ip: "server_ip", auto_config: false
 			server.vm.host_name = server_name
 			server.vm.provision "shell" do |s| 
 				s.inline = $script
