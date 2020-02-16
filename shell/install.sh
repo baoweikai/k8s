@@ -14,6 +14,7 @@ do
     sshpass -p $password scp -r '/mnt/k8s/shell/init.sh' $username'@'$master':/tmp/init.sh'
     sshpass -p $password scp -r '/mnt/k8s/shell/master.sh' $username'@'$master':/tmp/master.sh'
     sshpass -p $password ssh $username'@'$master sudo /tmp/init.sh
+    sshpass -p $password ssh $username'@'$master sudo /tmp/master.sh ${APISERVER_IP} ${APISERVER_IP} ${APISERVER_IP}
     ## 初始化主节点
     if [ $APISERVER_IP==master ];
     then
@@ -24,9 +25,9 @@ do
 		certificatekey=${BASH_REMATCH[3]}
     else
 		## 加入集群主节点
-		kubeadm join ${APISERVER_NAME}:6443 --token $token discovery-token-ca-cert-hash ${certhash} control-plane --certificate-key ${certificatekey}
+		sshpass -p $password ssh $username'@'$worker `sudo kubeadm join ${APISERVER_NAME}:6443 --token $token discovery-token-ca-cert-hash ${certhash} control-plane --certificate-key ${certificatekey}`
     fi
-    ## logout # 退出当前机器
+    logout # 退出当前机器
 done
 ## 循环安装工作节点
 for worker in ${workers[@]}
@@ -36,7 +37,8 @@ do
     ## sshpass -p $password scp -r '/mnt/k8s/shell/worker.sh' $username'@'$worker':/tmp/worker.sh'
     sshpass -p $password ssh $username'@'$worker sudo /tmp/init.sh
 	## 设定节点hosts
-	sshpass -p $password ssh $username'@'$worker sudo sed -i "/$/a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts
+	sshpass -p $password ssh $username'@'$worker `sudo sed -i "/$/a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts`
 	# 加入集群工作节点
-	kubeadm join ${APISERVER_NAME}:6443 --token $token discovery-token-ca-cert-hash ${cert-hash}
+	sshpass -p $password ssh $username'@'$worker `sudo kubeadm join ${APISERVER_NAME}:6443 --token $token discovery-token-ca-cert-hash ${certhash}`
+	logout
 done
