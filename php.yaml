@@ -4,6 +4,7 @@ kind: Namespace
 metadata:
   name: lnmp
 # 内部服务端口
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -27,7 +28,7 @@ metadata:
   labels:
     app: app
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: app-php
@@ -40,7 +41,7 @@ spec:
     spec:
       containers:
         - name: php
-          image: registry.cn-beijing.aliyuncs.com/baoweikai/php:latest # 自定义镜像
+          image: php:fpm-alpine # 自定义镜像
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000

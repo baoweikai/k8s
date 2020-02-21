@@ -55,7 +55,7 @@ metadata:
     app: app
 spec:
   # minReadySeconds: 5
-  replicas: 2
+  replicas: 3
   updateStrategy:
     type: RollingUpdate
   serviceName: mysql

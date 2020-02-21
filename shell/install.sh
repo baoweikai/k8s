@@ -1,12 +1,14 @@
 #!/bin/bash
-
+## 
 masters=('192.168.137.10')
 workers=('192.168.137.11' '192.168.137.12' '192.168.137.13')
 username='vagrant'
 password='huaren830415'
 APISERVER_IP=${masters[0]}
 APISERVER_NAME='apiserver'
-varsion='1.17.3'
+VERSION='1.17.3'
+### 安装sshpass
+yum install -y sshpass
 ## 循环安装主节点
 for master in ${masters[@]}
 do
@@ -14,16 +16,16 @@ do
     sshpass -p $password scp -r '/mnt/k8s/shell/init.sh' $username'@'$master':/tmp/init.sh'
     sshpass -p $password scp -r '/mnt/k8s/shell/master.sh' $username'@'$master':/tmp/master.sh'
     sshpass -p $password ssh $username'@'$master sudo /tmp/init.sh
-    sshpass -p $password ssh $username'@'$master sudo /tmp/master.sh ${APISERVER_IP} ${APISERVER_IP} ${APISERVER_IP}
     ## 初始化主节点
     if [ $APISERVER_IP==master ];
     then
-		result=`sshpass -p $password ssh $username'@'$master sudo /tmp/master.sh ${APISERVER_IP} ${APISERVER_NAME} ${varsion}`
+		result=`sshpass -p $password ssh $username'@'$master sudo /tmp/master.sh '127.0.0.1' ${APISERVER_NAME} ${VERSION}`
 		[[ "$result" =~ 'kubeadm join apiserver:6443 --token '([0-9a-z\.]+)' \'[^0-9a-z]+'discovery-token-ca-cert-hash '([0-9a-z\:\.]+)' \'[^0-9a-z]+'control-plane --certificate-key '([0-9a-z\.]+)[^0-9a-z]+ ]]
 		token=${BASH_REMATCH[1]}
 		certhash=${BASH_REMATCH[2]}
 		certificatekey=${BASH_REMATCH[3]}
     else
+		sshpass -p $password ssh $username'@'$master sudo /tmp/master.sh ${APISERVER_IP} ${APISERVER_NAME} ${VERSION}
 		## 加入集群主节点
 		sshpass -p $password ssh $username'@'$worker `sudo kubeadm join ${APISERVER_NAME}:6443 --token $token discovery-token-ca-cert-hash ${certhash} control-plane --certificate-key ${certificatekey}`
     fi
@@ -38,7 +40,16 @@ do
     sshpass -p $password ssh $username'@'$worker sudo /tmp/init.sh
 	## 设定节点hosts
 	sshpass -p $password ssh $username'@'$worker `sudo sed -i "/$/a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts`
+	logout
 	# 加入集群工作节点
 	sshpass -p $password ssh $username'@'$worker `sudo kubeadm join ${APISERVER_NAME}:6443 --token $token discovery-token-ca-cert-hash ${certhash}`
 	logout
 done
+
+
+### /mnt/k8s/sealos init --master 192.168.137.10 \
+    --node 192.168.137.11 --node 192.168.137.12 --node 192.168.137.13 \
+    --user root \
+    --passwd huaren830415 \
+    --version v1.17.3 \
+    --pkg-url /mnt/k8s/kube1.17.3.tar.gz 

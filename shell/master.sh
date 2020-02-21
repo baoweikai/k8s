@@ -10,7 +10,7 @@ VERSION=$3
 POD_SUBNET=10.100.0.1/16
 sed -i "/$/a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts
 # 脚本出错时终止执行
-set -e
+## set -e
 if [ ${#POD_SUBNET} -eq 0 ] || [ ${#APISERVER_NAME} -eq 0 ]; then
   echo -e "\033[31;1m请确保您已经设置了环境变量 POD_SUBNET 和 APISERVER_NAME \033[0m"
   echo 当前POD_SUBNET=$POD_SUBNET

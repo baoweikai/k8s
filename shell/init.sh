@@ -18,11 +18,9 @@ docker-logrotate \
 docker-selinux \
 docker-engine-selinux \
 docker-engine
-
 # 设置 yum repository
 yum install -y yum-utils device-mapper-persistent-data lvm2
 yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
-
 # 安装 containerd.io
 if [ ! -d "/mnt/k8s/containerd.io-1.2.10-3.2.el7.x86_64.rpm" ]
 then
@@ -34,23 +32,18 @@ fi
 yum install -y docker-ce docker-ce-cli
 systemctl enable docker
 systemctl start docker
-
 # 安装 nfs-utils 才能挂载 nfs 网络存储
 yum install -y nfs-utils
-
 # 关闭 防火墙
 systemctl stop firewalld
 systemctl disable firewalld
-
 # 关闭 SeLinux
 setenforce 0
 sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config
-
 # 关闭 swap
 swapoff -a
 yes | cp /etc/fstab /etc/fstab_bak
 cat /etc/fstab_bak |grep -v swap > /etc/fstab
-
 # 修改 /etc/sysctl.conf
 # 如果有配置，则修改
 sed -i "s#^net.ipv4.ip_forward.*#net.ipv4.ip_forward=1#g"  /etc/sysctl.conf
@@ -62,7 +55,6 @@ echo "net.bridge.bridge-nf-call-ip6tables = 1" >> /etc/sysctl.conf
 echo "net.bridge.bridge-nf-call-iptables = 1" >> /etc/sysctl.conf
 # 执行命令以应用
 sysctl -p
-
 # 配置K8S的yum源
 cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
@@ -74,21 +66,18 @@ repo_gpgcheck=0
 gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
        http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
 EOF
-
 # 卸载旧版本
 yum remove -y kubelet kubeadm kubectl
-
 # 安装kubelet、kubeadm、kubectl
 yum install -y kubelet kubeadm kubectl
-
 # 修改docker启动配置 Cgroup Driver为systemd
 sed -i "s#^ExecStart=/usr/bin/dockerd.*#ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --exec-opt native.cgroupdriver=systemd#g" /usr/lib/systemd/system/docker.service
-
 # 设置 docker 镜像源，提高 docker 镜像下载速度和稳定性
 curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
-
 ## 重启 docker，并启动 kubelet
 systemctl daemon-reload
-systemctl restart docker && systemctl enable kubelet && systemctl start kubelet
-
+sudo systemctl restart docker
+systemctl enable kubelet
+systemctl start kubelet || true
+## 此时 kubelet 启动失败，请忽略此错误，因为必须完成kubeadm init，kubelet 才能正常启动
 ## docker version
