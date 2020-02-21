@@ -5,9 +5,11 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" # 配置文件
 RUN apk update # 更新软件包
 # Override with custom opcache settings
 # COPY config/opcache.ini $PHP_INI_DIR/conf.d/  # 缓存配置
+## 依赖库
+RUN apk add openssl openssl-dev libstdc++
 # 安装 pdo_mysql 扩展
-RUN docker-php-ext-install pdo_mysql
-# RUN apk add --update php7-gd
+RUN docker-php-ext-install pdo_mysql && docker-php-ext-enable pdo_mysql
+RUN docker-php-ext-install fileinfo && docker-php-ext-enable fileinfo
 # 安装及配置支持的类型，然后安装gd库
 RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev jpeg-dev libjpeg libjpeg-turbo-dev
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
@@ -21,7 +23,6 @@ RUN curl -fsSL 'http://pecl.php.net/get/redis-5.2.0RC1.tgz' -o redis.tar.gz \
     && docker-php-ext-install /tmp/redis \
     && rm -r /tmp/redis
 # 安装mongodb扩展
-RUN apk add openssl openssl-dev # mongo依赖库
 RUN curl -fsSL 'http://pecl.php.net/get/mongodb-1.7.2.tgz' -o mongodb.tar.gz \
     && mkdir -p /tmp/mongodb \
     && tar -xf mongodb.tar.gz -C /tmp/mongodb --strip-components=1 \
@@ -30,7 +31,6 @@ RUN curl -fsSL 'http://pecl.php.net/get/mongodb-1.7.2.tgz' -o mongodb.tar.gz \
     && docker-php-ext-install /tmp/mongodb \
     && rm -r /tmp/mongodb
 # 安装swoole扩展
-RUN apk add libstdc++ # swoole依赖库
 RUN curl -fsSL 'http://pecl.php.net/get/swoole-4.4.15.tgz' -o swoole.tar.gz \
     && mkdir -p /tmp/swoole \
     && tar -xf swoole.tar.gz -C /tmp/swoole --strip-components=1 \
@@ -38,6 +38,3 @@ RUN curl -fsSL 'http://pecl.php.net/get/swoole-4.4.15.tgz' -o swoole.tar.gz \
     && docker-php-ext-configure /tmp/swoole --enable-swoole \
     && docker-php-ext-install /tmp/swoole \
     && rm -r /tmp/swoole
-	
-	
-docker-php-ext-configure gd --with-freetype=/usr/lib/ --with-jpeg=/usr/lib/ --enable-gd
