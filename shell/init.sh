@@ -8,7 +8,7 @@
 # https://docs.docker.com/install/linux/linux-postinstall/
 
 # 卸载旧版本
-yum remove -y docker \
+yum remove -y -q docker \
 docker-client \
 docker-client-latest \
 docker-common \
@@ -19,21 +19,22 @@ docker-selinux \
 docker-engine-selinux \
 docker-engine
 # 设置 yum repository
-yum install -y yum-utils device-mapper-persistent-data lvm2
-yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum install -y -q yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
 # 安装 containerd.io
-if [ ! -d "/mnt/k8s/containerd.io-1.2.10-3.2.el7.x86_64.rpm" ]
+if [ ! -d "/mnt/k8s/shell/containerd.io.rpm" ]
 then
-	yum install -y /mnt/k8s/containerd.io-1.2.10-3.2.el7.x86_64.rpm
+	yum install -y -q /mnt/k8s/shell/containerd.io.rpm
 else
-	yum install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.10-3.2.el7.x86_64.rpm
+	yum install -y -q https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.10-3.2.el7.x86_64.rpm
 fi
 # 安装并启动 docker
-yum install -y docker-ce docker-ce-cli
+yum install -y -q /mnt/k8s/shell/docker-ce.rpm /mnt/k8s/shell/docker-ce-cli.rpm ## /mnt/k8s/shell/docker-ce-selinux.noarch.rpm
 systemctl enable docker
 systemctl start docker
 # 安装 nfs-utils 才能挂载 nfs 网络存储
-yum install -y nfs-utils
+yum install -y -q nfs-utils
 # 关闭 防火墙
 systemctl stop firewalld
 systemctl disable firewalld
@@ -55,6 +56,15 @@ echo "net.bridge.bridge-nf-call-ip6tables = 1" >> /etc/sysctl.conf
 echo "net.bridge.bridge-nf-call-iptables = 1" >> /etc/sysctl.conf
 # 执行命令以应用
 sysctl -p
+# 设置 docker 镜像源，提高 docker 镜像下载速度和稳定性
+## curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
+# 修改docker启动配置 Cgroup Driver为systemd
+sed -i "s#^ExecStart=/usr/bin/dockerd.*#ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --exec-opt native.cgroupdriver=systemd#g" /usr/lib/systemd/system/docker.service
+## sed -i "s/^Requires=docker.socket/## Requires=docker.socket/g" /usr/lib/systemd/system/docker.service
+## 重启 docker，并启动 kubelet
+systemctl daemon-reload
+systemctl restart docker
+## sed -i "s#^SELINUX=disabled#SELINUX=1#g" /etc/selinux/config
 # 配置K8S的yum源
 cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
@@ -69,15 +79,9 @@ EOF
 # 卸载旧版本
 yum remove -y kubelet kubeadm kubectl
 # 安装kubelet、kubeadm、kubectl
-yum install -y kubelet kubeadm kubectl
-# 修改docker启动配置 Cgroup Driver为systemd
-sed -i "s#^ExecStart=/usr/bin/dockerd.*#ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --exec-opt native.cgroupdriver=systemd#g" /usr/lib/systemd/system/docker.service
-# 设置 docker 镜像源，提高 docker 镜像下载速度和稳定性
-curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
-## 重启 docker，并启动 kubelet
-systemctl daemon-reload
-sudo systemctl restart docker
-systemctl enable kubelet
+yum install -y -q /mnt/k8s/shell/kubelet.rpm /mnt/k8s/shell/kubeadm.rpm /mnt/k8s/shell/kubectl.rpm
+## 启动kubelet
+systemctl enable kubelet || true
 systemctl start kubelet || true
 ## 此时 kubelet 启动失败，请忽略此错误，因为必须完成kubeadm init，kubelet 才能正常启动
 ## docker version

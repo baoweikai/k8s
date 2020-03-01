@@ -34,6 +34,15 @@ data:
       filePath: ""              ## 设置调试日志文件存储路径，如果为空则输出到控制台
       level: error              ## 设置调试日志级别
       format: json              ## 设置调试日志格式
+    ## 使用 tls 验证这种方式,自动
+    certificatesresolvers
+      default
+        acme
+      	  tlsChallenge=true
+          email="111111@163.com" ## 邮箱配置
+          storage="acme.json" ## 保存 ACME 证书的位置
+          # 下面是用于测试的ca服务，如果https证书生成成功了，则移除下面参数
+          caserver=https://acme-staging-v02.api.letsencrypt.org/directory
     accessLog:
       filePath: ""              ## 设置访问日志文件存储路径，如果为空则输出到控制台
       format: json              ## 设置访问调试日志格式
