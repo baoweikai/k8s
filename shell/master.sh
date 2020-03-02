@@ -8,9 +8,9 @@ APISERVER_NAME=$2 # 替换 apiserver 为 您想要的 dnsName
 VERSION=$3
 # Kubernetes 容器组所在的网段，该网段安装完成后，由 kubernetes 创建，事先并不存在于您的物理网络中
 POD_SUBNET=10.100.0.1/16
-sed -i "/$/a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts
+sed -i "\$a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts
 # 脚本出错时终止执行
-## set -e
+set -e
 if [ ${#POD_SUBNET} -eq 0 ] || [ ${#APISERVER_NAME} -eq 0 ]; then
   echo -e "\033[31;1m请确保您已经设置了环境变量 POD_SUBNET 和 APISERVER_NAME \033[0m"
   echo 当前POD_SUBNET=$POD_SUBNET
