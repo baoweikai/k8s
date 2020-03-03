@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
 	    :master => '192.168.137.10',
 	    :node1 => '192.168.137.11',
 	    :node2 => '192.168.137.12',
-	    :node3 => '192.168.137.13'
+	    ## :node3 => '192.168.137.13'
 	}
 	gateway_ip = '192.168.137.1'
 	# systemctl restart network # centos7网络重载
