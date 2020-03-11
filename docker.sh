@@ -1,7 +1,8 @@
+#!/bin/bash
 ### php
 docker run -d --name php --net net \
 -p 9000:9000 -p 9501:9501 \
--v 'D:/www':/var/html \
+-v 'D:/www':/var/html:rw \
 -v 'D:/k8s/etc/php/php.ini':/usr/local/etc/php/php.ini baoweikai/php
 ### nginx
 docker run -d --name nginx --net net \
@@ -26,6 +27,7 @@ docker run -d --name mysql1 \
 --net net -p 3301:3306 \
 -v 'D:/k8s/etc/mysql/my.cnf':/etc/mysql/conf.d/my.cnf \
 -v 'D:/log/mysql1':/var/log/mysql \
+-v 'D:/data/mysql1':/var/lib/mysql \
 -e MYSQL_ROOT_PASSWORD=huaren54321 \
 -e MYSQL_USER=zhrmghg \
 -e MYSQL_PASSWORD=huaren54321 \
