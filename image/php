@@ -11,9 +11,9 @@ RUN apk add openssl openssl-dev libstdc++
 RUN docker-php-ext-install pdo_mysql
 ## RUN docker-php-ext-install fileinfo
 # 安装及配置支持的类型，然后安装gd库
-RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev jpeg-dev libjpeg libjpeg-turbo-dev
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install -j$(nproc) gd && docker-php-ext-enable gd
+RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev jpeg-dev libjpeg libjpeg-turbo-dev \
+		&& docker-php-ext-configure gd --with-freetype --with-jpeg \
+		&& docker-php-ext-install -j$(nproc) gd && docker-php-ext-enable gd
 ## 安装# 扩展
 # RUN apk add -y libmcrypt-dev
 # RUN docker-php-ext-install mcrypt
