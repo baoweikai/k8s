@@ -17,7 +17,7 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev jpe
 ## 安装# 扩展
 # RUN apk add -y libmcrypt-dev
 # RUN docker-php-ext-install mcrypt
-# 安装rdis扩展
+# 安装redis扩展
 RUN curl -fsSL 'http://pecl.php.net/get/redis-5.2.0RC2.tgz' -o redis.tar.gz \
     && mkdir -p /tmp/redis \
     && tar -xf redis.tar.gz -C /tmp/redis --strip-components=1 \
@@ -41,3 +41,12 @@ RUN curl -fsSL 'http://pecl.php.net/get/swoole-4.4.16.tgz' -o swoole.tar.gz \
     && docker-php-ext-configure /tmp/swoole --enable-swoole \
     && docker-php-ext-install /tmp/swoole \
     && rm -r /tmp/swoole
+# 安装zip扩展
+RUN apk add libzip-dev
+RUN curl -fsSL 'http://pecl.php.net/get/zip-1.18.2.tgz' -o zip.tar.gz \
+    && mkdir -p /tmp/zip \
+    && tar -xf zip.tar.gz -C /tmp/zip --strip-components=1 \
+    && rm zip.tar.gz \
+    && docker-php-ext-configure /tmp/zip --enable-zip \
+    && docker-php-ext-install /tmp/zip \
+    && rm -r /tmp/zip
