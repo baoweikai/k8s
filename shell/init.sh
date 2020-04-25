@@ -27,7 +27,7 @@ if [ ! -d "/mnt/k8s/shell/containerd.io.rpm" ]
 then
 	yum install -y -q /mnt/k8s/shell/containerd.io.rpm
 else
-	yum install -y -q https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.10-3.2.el7.x86_64.rpm
+	yum install -y -q https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.13-3.1.el7.x86_64.rpm
 fi
 # 安装并启动 docker
 yum install -y -q /mnt/k8s/shell/docker-ce.rpm /mnt/k8s/shell/docker-ce-cli.rpm ## /mnt/k8s/shell/docker-ce-selinux.noarch.rpm
