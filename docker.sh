@@ -31,4 +31,4 @@ docker run -d --name mysql1 \
 -e MYSQL_ROOT_PASSWORD=huaren54321 \
 -e MYSQL_USER=zhrmghg \
 -e MYSQL_PASSWORD=huaren54321 \
--e MYSQL_DATABASE=cz mysql
+-e MYSQL_DATABASE=sxg mysql
