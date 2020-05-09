@@ -9,23 +9,18 @@ RUN apk update # 更新软件包
 RUN apk add openssl openssl-dev libstdc++
 # 安装 pdo_mysql
 RUN docker-php-ext-install pdo_mysql
-## RUN docker-php-ext-install fileinfo
 # 安装及配置支持的类型，然后安装gd库
-# RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev jpeg-dev libjpeg libjpeg-turbo-dev \
 RUN apk add --no-cache freetype-dev libpng-dev libjpeg-turbo-dev \
 		&& docker-php-ext-configure gd --with-freetype --with-jpeg \
 		&& docker-php-ext-install -j$(nproc) gd
-## 安装# 扩展
-# RUN apk add -y libmcrypt-dev
-# RUN docker-php-ext-install mcrypt
 # 安装redis扩展
-# RUN curl -fsSL 'https://pecl.php.net/get/redis-5.2.2.tgz' -o redis.tar.gz \
-#    && mkdir -p /tmp/redis \
-#    && tar -xf redis.tar.gz -C /tmp/redis --strip-components=1 \
-#    && rm redis.tar.gz \
-#    && docker-php-ext-configure /tmp/redis --enable-redis \
-#    && docker-php-ext-install /tmp/redis \
-#    && rm -r /tmp/redis
+RUN curl -fsSL 'https://pecl.php.net/get/redis-5.2.2.tgz' -o redis.tar.gz \
+    && mkdir -p /tmp/redis \
+    && tar -xf redis.tar.gz -C /tmp/redis --strip-components=1 \
+    && rm redis.tar.gz \
+    && docker-php-ext-configure /tmp/redis --enable-redis \
+    && docker-php-ext-install /tmp/redis \
+    && rm -r /tmp/redis
 # 安装mongodb扩展
 RUN curl -fsSL 'http://pecl.php.net/get/mongodb-1.8.0beta1.tgz' -o mongodb.tar.gz \
     && mkdir -p /tmp/mongodb \
