@@ -8,7 +8,7 @@ RUN apk update # 更新软件包
 ## 依赖库
 RUN apk add openssl openssl-dev libstdc++
 # 安装 pdo_mysql
-RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install pdo_mysql bcmath # mysqli
 # 安装及配置支持的类型，然后安装gd库
 RUN apk add --no-cache freetype-dev libpng-dev libjpeg-turbo-dev \
 		&& docker-php-ext-configure gd --with-freetype --with-jpeg \
