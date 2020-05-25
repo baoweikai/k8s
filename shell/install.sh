@@ -1,12 +1,12 @@
 #!/bin/bash
 ## 
 masters=('192.168.137.10')
-workers=('192.168.137.11' '192.168.137.12')
+workers=('192.168.137.11' '192.168.137.12' '192.168.137.13')
 username='vagrant'
 password='huaren830415'
 APISERVER_IP=${masters[0]}
 APISERVER_NAME='apiserver'
-VERSION='1.17.3'
+VERSION='1.18.3'
 ### 安装sshpass
 yum remove -y sshpass && yum install -y sshpass
 ## 所有节点安装docker及kubelet
