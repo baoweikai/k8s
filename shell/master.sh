@@ -7,7 +7,7 @@ APISERVER_IP=$1
 APISERVER_NAME=$2 # 替换 apiserver 为 您想要的 dnsName
 VERSION=$3
 # Kubernetes 容器组所在的网段，该网段安装完成后，由 kubernetes 创建，事先并不存在于您的物理网络中
-POD_SUBNET=10.100.0.1/16
+POD_SUBNET='10.100.0.1/16'
 sed -i "\$a ${APISERVER_IP} ${APISERVER_NAME}" /etc/hosts
 # 脚本出错时终止执行
 set -e
@@ -37,8 +37,8 @@ rm -rf /root/.kube/
 mkdir /root/.kube/
 cp -i /etc/kubernetes/admin.conf /root/.kube/config
 # 安装 calico 网络插件 参考文档 https://docs.projectcalico.org/v3.10/getting-started/kubernetes/
-echo "安装calico-3.10.2"
-rm -f calico-3.10.2.yaml
-curl -O https://kuboard.cn/install-script/calico/calico-3.10.2.yaml
-sed -i "s#192\.168\.137\.0/16#${POD_SUBNET}#" calico-3.10.2.yaml
-kubectl apply -f calico-3.10.2.yaml
+echo "安装calico-3.13.1"
+rm -f calico-3.13.1.yaml
+curl -O https://kuboard.cn/install-script/calico/calico-3.13.1.yaml
+sed -i "s#192\.168\.137\.0/16#${POD_SUBNET}#" calico-3.13.1.yaml
+kubectl apply -f calico-3.13.1.yaml
