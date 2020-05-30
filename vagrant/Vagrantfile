@@ -1,16 +1,16 @@
 # you're doing. 2 代表版本
 Vagrant.configure("2") do |config|
-  config.vm.box = "cos7" ## vagrant box add cos7 centos7.box
-  config.vm.provider "hyperv" do |v|
-    v.memory = 2048
-    v.cpus = 2
-  end
+	config.vm.box = "cos7" ## vagrant box add cos7 centos7.box
+	config.vm.provider "hyperv" do |v|
+		v.memory = 2048
+		v.cpus = 2
+	end
 	
 	servers = {
-	    :master => '192.168.137.10',
-	    :node1 => '192.168.137.11',
-	    :node2 => '192.168.137.12',
-	    :node3 => '192.168.137.13'
+		:master => '192.168.137.10',
+		:node1 => '192.168.137.11',
+		:node2 => '192.168.137.12',
+		:node3 => '192.168.137.13'
 	}
 	gateway_ip = '192.168.137.1'
 	# systemctl restart network # centos7网络重载
@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
 	# nmcli d reapply eth0
 	servers.each do |server_name, server_ip|
 		config.vm.define server_name, autostart: true do |server|
-            ## server.vm.network "private_network", ip: "server_ip", auto_config: false
+			## server.vm.network "private_network", ip: "server_ip", auto_config: false
 			server.vm.host_name = server_name
 			server.vm.provision "shell" do |s| 
 				s.inline = $script
