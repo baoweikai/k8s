@@ -21,6 +21,8 @@ data:
         address: ":443"         ## 配置 443 端口，并设置入口名称为 https
       php:
         address: ":9000"        ## 配置 9000 端口，并设置入口名称为 php
+      swoole:
+        address: ":9501"        ## 配置 9000 端口，并设置入口名称为 swoole
       mysql:
         address: ":3306"        ## 配置 3306 端口，并设置入口名称为 mysql
       redis:
@@ -112,6 +114,9 @@ spec:
             - name: php
               containerPort: 9000
               hostPort: 9000        ## 将容器端口绑定所在服务器的 9000 端口
+            - name: swoole
+              containerPort: 9501
+              hostPort: 9501        ## 将容器端口绑定所在服务器的 9000 端口
             - name: mysql
               containerPort: 3306
               hostPort: 3306        ## 将容器端口绑定所在服务器的 3306 端口
@@ -160,7 +165,7 @@ spec:
   entryPoints:
     - http
   routes:
-    - match: Host(`traefik.lc.com`) ## traefik后台
+    - match: Host(`traefik.k8s.com`) ## traefik后台
       kind: Rule
       services:
         - name: traefik

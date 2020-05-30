@@ -163,10 +163,15 @@ spec:
   entryPoints:
     - https
   tls:
-    secretName: lc-tls
+    secretName: ls-tls
   routes:
-    - match: Host(`lc.com`, `www.lc.com`, `apim.lc.com`, `b.lc.com`, `apia.lc.com`) # 首页
+    - match: Host(`ls.com`, `www.ls.com`, `b.ls.com`) # 首页
       kind: Rule
       services:
         - name: nginx
           port: 80
+    - match: Host(`apim.ls.com`, `apia.ls.com`) # 首页
+      kind: Rule
+      services:
+        - name: swoole
+          port: 9501

@@ -1,12 +1,11 @@
 masters = (192.168.137.10)
-nodes = (192.168.137.11 192.168.137.12)
+nodes = (192.168.137.11 192.168.137.12 192.168.137.13)
 masterClain = ''
-sealos init --kubeadm-config kubeadm-config.yaml.tmpl \
-    --master 192.168.0.2 \
-    --master 192.168.0.3 \
-    --master 192.168.0.4 \
-    --node 192.168.0.5 \
+sealos init --master 192.168.137.10 \
+    --node 192.168.137.11 \
+    --node 192.168.137.12 \
+    --node 192.168.137.13 \
     --user root \
-    --passwd your-server-password \
-    --version v1.17.0 \
-    --pkg-url /root/kube1.17.0.tar.gz 
+    --passwd huaren830415 \
+    --version v1.18.3 \
+    --pkg-url /mnt/k8s/kube1.18.3.tar.gz

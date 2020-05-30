@@ -14,7 +14,7 @@ sudo kubeadm reset -f
 /mnt/k8s/shell/init.sh
 echo "127.0.0.1    ${APISERVER_NAME}" >> /etc/hosts
 result=`/mnt/k8s/shell/init_master.sh ${APISERVER_NAME} ${VERSION}`
-[[ ${result} =~ 'kubeadm join '${APISERVER_NAME}':6443 --token '([0-9a-z\.]+)' '[^0-9a-z]+'discovery-token-ca-cert-hash '([0-9a-z\:\.]+)' '[^0-9a-z]+'control-plane --certificate-key '([0-9a-z]+) ]]
+[[ ${result} =~ 'kubeadm join '${APISERVER_NAME}':6443 --token '([0-9a-z\.]+)' '[^0-9a-z]+'discovery-token-ca-cert-hash '([0-9a-z\:]+)' '[^0-9a-z]+'control-plane --certificate-key '([0-9a-z]+) ]]
 token=${BASH_REMATCH[1]}
 certhash=${BASH_REMATCH[2]}
 certificatekey=${BASH_REMATCH[3]}

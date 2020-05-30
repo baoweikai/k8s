@@ -20,6 +20,21 @@ spec:
   selector:
     app: app-php
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swoole
+  namespace: lnmp
+  labels:
+    app: app
+spec:
+  ports:
+    - port: 9501 # 容器端口
+      protocol: TCP
+      targetPort: 9501 # 应用端口
+  selector:
+    app: app-php
+---
 apiVersion: apps/v1 # version
 kind: Deployment
 metadata:
@@ -60,4 +75,4 @@ spec:
             path: /mnt/www
         - name: php-ini
           hostPath:
-            path: /mnt/tool/etc/php/php.ini
+            path: /mnt/k8s/etc/php/php.ini

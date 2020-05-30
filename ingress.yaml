@@ -9,25 +9,25 @@ spec:
   entryPoints:
     - https
   tls:
-    secretName: lc-tls
+    secretName: ls-tls
   routes:
-    - match: Host(`lc.com`) # 首页
+    - match: Host(`ls.com`) # 首页
       kind: Rule
       services:
-        - name: php
+        - name: http
           port: 80
-    - match: Host(`apim.lc.com`) # 前台接口
+    - match: Host(`apim.ls.com`) # 前台接口
       kind: Rule
       services:
-        - name: php
-          port: 80
-    - match: Host(`b.lc.com`) # 首页
+        - name: swoole
+          port: 9501
+    - match: Host(`b.ls.com`) # 首页
       kind: Rule
       services:
-        - name: php
+        - name: http
           port: 80
-    - match: Host(`apia.lc.com`) # 后台接口
+    - match: Host(`apia.ls.com`) # 后台接口
       kind: Rule
       services:
-        - name: php
-          port: 80
+        - name: swoole
+          port: 9501

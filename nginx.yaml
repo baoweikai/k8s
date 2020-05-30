@@ -60,10 +60,10 @@ spec:
             path: /mnt/www
         - name: conf
           hostPath: # 指向本地文件
-            path: /mnt/tool/etc/nginx/nginx.conf
+            path: /mnt/k8s/etc/nginx/nginx.conf
         - name: vhost
           hostPath: # 指向本地文件
-            path: /mnt/tool/etc/nginx/vhost
+            path: /mnt/k8s/etc/nginx/vhost
 # 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -75,10 +75,15 @@ spec:
   entryPoints:
     - https
   tls:
-    secretName: lc-tls
+    secretName: ls-tls
   routes:
-    - match: Host(`lc.com`, `www.lc.com`, `b.lc.com`,`apim.lc.com`, `apia.lc.com`) # 首页
+    - match: Host(`ls.com`, `www.ls.com`, `b.ls.com`) # 首页
       kind: Rule
       services:
         - name: nginx
           port: 80
+    - match: Host(`api.ls.com`) # 首页
+      kind: Rule
+      services:
+        - name: swoole
+          port: 9501
