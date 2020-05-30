@@ -16,7 +16,9 @@ echo $token
 ## 循环初始化工作节点
 for worker in ${workers[@]}
 do
-	sshpass -p $password ssh -o "StrictHostKeyChecking no" $username'@'$worker echo "${APISERVER_IP} ${APISERVER_NAME}" >> /etc/hosts
-	# 加入集群工作节点
-	sshpass -p $password ssh -o "StrictHostKeyChecking no" $username'@'$worker kubeadm join ${APISERVER_NAME}:6443 --token ${token} --discovery-token-ca-cert-hash ${certhash}
+    #sshpass -p $password scp -o "StrictHostKeyChecking no" -r '/mnt/k8s/shell/init.sh' $username'@'$worker':/tmp/init.sh'
+    #sshpass -p $password ssh -o "StrictHostKeyChecking no" $username'@'$worker sudo /tmp/init.sh
+	sshpass -p ${password} ssh -o "StrictHostKeyChecking no" ${username}'@'${worker} sudo kubeadm reset -f
+	sshpass -p ${password} ssh -o "StrictHostKeyChecking no" ${username}'@'${worker} 'echo "'${APISERVER_IP}' '${APISERVER_NAME}'" >> /etc/hosts'
+	sshpass -p ${password} ssh -o "StrictHostKeyChecking no" ${username}'@'${worker} 'kubeadm join '${APISERVER_NAME}':6443 --token '${token}' --discovery-token-ca-cert-hash '${certhash}
 done
