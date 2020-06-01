@@ -1,0 +1,21 @@
+## 把角色cluster-admin绑定到集群账户default
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default-admin-rbac (or whatever)
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+## 储存类型
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: mysql-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
