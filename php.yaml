@@ -1,15 +1,15 @@
 # 名称空间
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: lnmp
+#apiVersion: v1
+#kind: Namespace
+#metadata:
+#  name: lnmp
 # 内部服务端口
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: php
-  namespace: lnmp
+  namespace: default
   labels:
     app: app
 spec:
@@ -24,7 +24,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: swoole
-  namespace: lnmp
+  namespace: default
   labels:
     app: app
 spec:
@@ -39,7 +39,7 @@ apiVersion: apps/v1 # version
 kind: Deployment
 metadata:
   name: php
-  namespace: lnmp
+  namespace: default
   labels:
     app: app
 spec:
