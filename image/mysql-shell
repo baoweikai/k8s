@@ -5,6 +5,6 @@ RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends wget; \
 	rm -rf /var/lib/apt/lists/*; \
-	wget -O --no-check-certificate /mnt/mysql-shell.deb "https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell_8.0.20-1debian10_amd64.deb"; \
+	wget --no-check-certificate -O /mnt/mysql-shell.deb "https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell_8.0.20-1debian10_amd64.deb"; \
 	apt-get install /mnt/mysql-shell.deb; \
 	rm -rf /mnt/mysql-shell.deb;
