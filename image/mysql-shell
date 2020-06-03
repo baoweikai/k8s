@@ -1,8 +1,10 @@
-FROM centos
+FROM debian:buster-slim
 ENV container docker
 LABEL Description="mysql-shell"
-RUN yum install -y https://dev.mysql.com/get/mysql80-community-release-el8-1.noarch.rpm
-RUN yum install -y mysql-shell
-CMD ["mysqlsh --file cluster.js"]
-
-
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends wget; \
+	rm -rf /var/lib/apt/lists/*; \
+	wget -O /mnt/mysql-shell.deb "https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell_8.0.20-1debian10_amd64.deb"; \
+	apt-get install /mnt/mysql-shell.deb; \
+	rm -rf /mnt/mysql-shell.deb;
