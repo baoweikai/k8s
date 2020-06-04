@@ -98,7 +98,7 @@ spec:
       containers:
       - name: mysql
         image: mysql
-        args: ["--default-authentication-plugin=mysql_native_password"]
+        args: ["--default-authentication-plugin=mysql_native_password", "--lower-case-table-names=1"]
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "1"
@@ -136,7 +136,8 @@ spec:
         hostPath: # 指向本地文件
           path: /mnt/data/mysql
       - name: conf
-        emptyDir: {}
+        hostPath: # 指向本地文件
+          path: /etc/mysql/conf.d
       - name: config-map
         configMap:
           name: mysql
