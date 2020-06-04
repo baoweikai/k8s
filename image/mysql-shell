@@ -4,7 +4,7 @@ LABEL Description="mysql-shell"
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends ca-certificates wget; \
-	rm -rf /var/lib/apt/lists/*; \
 	wget -O /mnt/mysql-shell.deb "https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell_8.0.20-1debian10_amd64.deb"; \
 	apt-get install /mnt/mysql-shell.deb; \
-	rm -rf /mnt/mysql-shell.deb;
+	rm -rf /mnt/mysql-shell.deb; \
+	rm -rf /var/lib/apt/lists/*;
