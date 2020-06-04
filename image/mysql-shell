@@ -8,3 +8,4 @@ RUN set -eux; \
 	apt-get install -y /mnt/mysql-shell.deb; \
 	rm -rf /mnt/mysql-shell.deb; \
 	rm -rf /var/lib/apt/lists/*;
+CMD ["mysqlsh"]
