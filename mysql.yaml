@@ -7,12 +7,14 @@ metadata:
 data:
   master.cnf: |
     [mysqld]
-    #lower_case_table_names=1
+    lower_case_table_names=1
+    symbolic-links=0
     # 打开binlog日志
     log-bin
   slave.cnf: |
     [mysqld]
-    #lower_case_table_names=1
+    lower_case_table_names=1
+    symbolic-links=0
     # 机器设置只读
     super-read-only
 ## 服务
@@ -50,7 +52,7 @@ metadata:
 spec:
   containers:
     - name: mysqlsh
-      image: mysql-shell
+      image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-shell
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -68,37 +70,10 @@ spec:
       labels:
         app: mysql # 匹配 .spec.selector.matchLabels
     spec:
-      initContainers:
-      - name: init-mysql
-        image: mysql
-        command:
-        - bash
-        - "-c"
-        - |
-          set ex
-          # Generate mysql server-id from pod ordinal index.
-          #[[ `hostname` =~ ([0-9]+)$ ]] || exit 1
-          # ordinal=${BASH_REMATCH[1]}
-          # echo [mysqld] > /mnt/conf.d/server-id.cnf
-
-          # Add an offset to avoid reserved server-id=0 value.
-          # echo server-id=$((100 + $ordinal)) >> /mnt/conf.d/server-id.cnf
-
-          # Copy appropriate conf.d files from config-map to emptyDir.
-          if [[ `hostname` -eq 'master' ]]; then
-            cp /mnt/config-map/master.cnf /mnt/conf.d/
-          else
-            cp /mnt/config-map/slave.cnf /mnt/conf.d/
-          fi
-        volumeMounts:
-        - name: conf
-          mountPath: /mnt/conf.d
-        - name: config-map
-          mountPath: /mnt/config-map
       containers:
       - name: mysql
         image: mysql
-        args: ["--default-authentication-plugin=mysql_native_password", "--lower-case-table-names=1"]
+        args: ["--default-authentication-plugin=mysql_native_password", "--lower-case-table-names=1", "--initialize-insecure"]
         env:
         - name: MYSQL_ALLOW_EMPTY_PASSWORD
           value: "1"
@@ -137,7 +112,7 @@ spec:
           path: /mnt/data/mysql
       - name: conf
         hostPath: # 指向本地文件
-          path: /etc/mysql/conf.d
+          path: /mnt/k8s/etc/mysql
       - name: config-map
         configMap:
           name: mysql
