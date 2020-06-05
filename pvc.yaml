@@ -19,9 +19,9 @@ metadata:
   name: mysql
   namespace: default
 spec:
-  storageClassName: mysql-sc
+  storageClassName: mysql
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 4Gi
+      storage: 2Gi

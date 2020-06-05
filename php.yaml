@@ -56,7 +56,7 @@ spec:
     spec:
       containers:
         - name: php
-          image: php:fpm-alpine # 自定义镜像
+          image: registry.cn-beijing.aliyuncs.com/baoweikai/php ## php:fpm-alpine 自定义镜像
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000

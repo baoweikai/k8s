@@ -7,14 +7,14 @@ metadata:
 data:
   master.cnf: |
     [mysqld]
-    lower_case_table_names=1
-    symbolic-links=0
+    # lower_case_table_names=1
+    # socket=/tmp/mysqld.sock
     # 打开binlog日志
     log-bin
   slave.cnf: |
     [mysqld]
-    lower_case_table_names=1
-    symbolic-links=0
+    # lower_case_table_names=1
+    # socket=/tmp/mysqld.sock
     # 机器设置只读
     super-read-only
 ## 服务
@@ -37,22 +37,21 @@ spec:
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: mysql
-provisioner: docker.io/hostpath
-reclaimPolicy: Retain
-volumeBindingMode: Immediate
-## mysql-shell
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
 ---
+kind: PersistentVolumeClaim
 apiVersion: v1
-kind: Pod
 metadata:
-  name: mysql-shell
-  labels:
-    app: mysql
+  name: local-claim
 spec:
-  containers:
-    - name: mysqlsh
-      image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-shell
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-storage
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -70,13 +69,43 @@ spec:
       labels:
         app: mysql # 匹配 .spec.selector.matchLabels
     spec:
+      initContainers:
+      - name: init-mysql
+        image: mysql
+        imagePullPolicy: IfNotPresent
+        command:
+        - bash
+        - "-c"
+        - |
+          set -ex
+          # mkdir -p /var/run/mysqld
+          # chmod -Rf 777 /var/run/mysqld
+          # ln -s /var/run/mysqld/mysqld.sock /tmp/mysqld.sock
+          # Copy appropriate conf.d files from config-map to emptyDir
+          if [[ $ordinal -eq 0 ]]; then
+            cp /mnt/config-map/master.cnf /etc/mysql/conf.d
+          else
+            cp /mnt/config-map/slave.cnf /etc/mysql/conf.d
+          fi
+        volumeMounts:
+        - name: conf
+          mountPath: /etc/mysql/conf.d
+        - name: config-map
+          mountPath: /mnt/config-map
       containers:
       - name: mysql
         image: mysql
-        args: ["--default-authentication-plugin=mysql_native_password", "--lower-case-table-names=1", "--initialize-insecure"]
+        imagePullPolicy: IfNotPresent
+        args: ["--default-authentication-plugin=mysql_native_password"]
         env:
-        - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "1"
+        - name: MYSQL_ROOT_PASSWORD
+          value: "huaren54321"
+        - name: MYSQL_USER
+          value: "zhrmghg"
+        - name: MYSQL_PASSWORD
+          value: "huaren54321"
+        - name: MYSQL_DATABASE
+          value: sxg mysql
         ports:
         - name: mysql
           containerPort: 3306
@@ -93,29 +122,54 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
-        livenessProbe:
+        livenessProbe: ## 存货探针
           exec:
-            command: ["mysqladmin", "ping"]
+            command:
+            - /bin/sh
+            - "-c"
+            - MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
+            - mysql -h 127.0.0.1 -u root -e "SELECT 1"
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-        readinessProbe:
+        readinessProbe: ## 状态探针
           exec:
             # Check we can execute queries over TCP (skip-networking is off).
-            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
+            command: 
+              - /bin/sh
+              - "-c"
+              - MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
+              - mysql -h 127.0.0.1 -u root -e "SELECT 1"
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
       volumes:
-      - name: data
-        hostPath: # 指向本地文件
-          path: /mnt/data/mysql
       - name: conf
         hostPath: # 指向本地文件
           path: /mnt/k8s/etc/mysql
       - name: config-map
         configMap:
           name: mysql
+      - name: data
+        hostPath: # 指向本地文件
+          path: /mnt/data/mysql
+## mysql-shell
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-shell
+  labels:
+    app: mysql
+spec:
+  containers:
+    - name: mysqlsh
+      image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-shell
+      command:
+        - /bin/sh
+        - "-c"
+        - --
+      args: [ "while true; do sleep 30; done;" ]
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
