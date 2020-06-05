@@ -32,26 +32,6 @@ spec:
   - port: 3306
     name: mysql
   clusterIP: None
-## 储存类型
----
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: local-claim
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
-  storageClassName: local-storage
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -165,11 +145,19 @@ spec:
   containers:
     - name: mysqlsh
       image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-shell
+      imagePullPolicy: IfNotPresent
       command:
         - /bin/sh
         - "-c"
         - --
       args: [ "while true; do sleep 30; done;" ]
+      volumeMounts:
+      - name: conf
+        mountPath: /etc/mysql
+  volumes:
+  - name: conf
+    hostPath: # 指向本地文件
+      path: /mnt/k8s/etc/mysql
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
