@@ -1,5 +1,5 @@
 ## 基于alpine创建镜像,可自行替换centos或其他
-FROM alpine
+FROM alpine:latest
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories # 修改软件源为阿里云镜像
 ## RUN apk update # 更新软件包
 ## 依赖库
