@@ -116,7 +116,7 @@ spec:
               hostPort: 9000        ## 将容器端口绑定所在服务器的 9000 端口
             - name: swoole
               containerPort: 9501
-              hostPort: 9501        ## 将容器端口绑定所在服务器的 9000 端口
+              hostPort: 9501        ## 将容器端口绑定所在服务器的 9501 端口
             - name: mysql
               containerPort: 3306
               hostPort: 3306        ## 将容器端口绑定所在服务器的 3306 端口
@@ -163,9 +163,9 @@ metadata:
   name: traefik-route
 spec:
   entryPoints:
-    - http
+    - mysql
   routes:
-    - match: Host(`traefik.k8s.com`) ## traefik后台
+    - match: Host(`traefik.ls.com`) ## traefik后台
       kind: Rule
       services:
         - name: traefik

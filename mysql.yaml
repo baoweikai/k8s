@@ -8,15 +8,25 @@ data:
   master.cnf: |
     [mysqld]
     # lower_case_table_names=1
-    # socket=/tmp/mysqld.sock
+    bind-address=0.0.0.0
     # 打开binlog日志
     log-bin
+
+    # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
+    # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
+    # skip-networking           #  跳过TCP/IP连接
+    # skip-host-cache           #  禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
   slave.cnf: |
     [mysqld]
     # lower_case_table_names=1
-    # socket=/tmp/mysqld.sock
+    bind-address=0.0.0.0
     # 机器设置只读
-    super-read-only
+    # super-read-only
+
+    # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
+    # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
+    # skip-networking           #  跳过TCP/IP连接
+    # skip-host-cache           #  禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
 ## 服务
 ---
 apiVersion: v1

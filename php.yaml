@@ -76,3 +76,19 @@ spec:
         - name: php-ini
           hostPath:
             path: /mnt/k8s/etc/php/php.ini
+# 入口路由
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  # namespace: default
+  name: swoole-route
+spec:
+  entryPoints:
+    - swoole
+  routes:
+    - match: Host(`api.ls.com`) # 首页
+      kind: Rule
+      services:
+        - name: swoole
+          port: 9501
