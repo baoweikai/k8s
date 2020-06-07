@@ -36,6 +36,7 @@ metadata:
   labels:
     app: mysql
 spec:
+  type: LoadBalancer
   selector:
     app: mysql
   ports:
@@ -100,6 +101,7 @@ spec:
         ports:
         - name: mysql
           containerPort: 3306
+        #  hostPort: 3306        ## 将容器端口绑到所在服务器的 3306 端口
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
@@ -136,8 +138,7 @@ spec:
           timeoutSeconds: 1
       volumes:
       - name: conf
-        hostPath: # 指向本地文件
-          path: /mnt/k8s/etc/mysql
+        emptyDir: {}
       - name: config-map
         configMap:
           name: mysql
