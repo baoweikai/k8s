@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mysql
 data:
-  master.cnf: |
+  master.cnf: |-
     [mysqld]
     lower_case_table_names=1
     bind-address=0.0.0.0
@@ -21,7 +21,7 @@ data:
     lower_case_table_names=1
     bind-address=0.0.0.0
     # 机器设置只读
-    super-read-only
+    # super-read-only
     # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
     # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
     # skip-networking           #  跳过TCP/IP连接
@@ -35,14 +35,13 @@ metadata:
   labels:
     app: mysql
 spec:
-#  type: LoadBalancer
   selector:
     app: mysql
   ports:
   - port: 3306
-    protocol: TCP
-    # targetPort: 3306 # 应用端口
-  clusterIP: None
+    targetPort: 3306 # 应用端口
+    # protocol: TCP
+  # clusterIP: None
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -87,7 +86,7 @@ spec:
       - name: mysql
         image: mysql
         imagePullPolicy: IfNotPresent
-        args: ["--default-authentication-plugin=mysql_native_password", "--initialize-insecure"]
+        args: ["--default-authentication-plugin=mysql_native_password"]
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: "huaren54321"
@@ -98,9 +97,8 @@ spec:
         - name: MYSQL_DATABASE
           value: sxg mysql
         ports:
-        - name: mysql
+        - containerPort: 3306
           protocol: TCP
-          containerPort: 3306
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
@@ -172,7 +170,7 @@ spec:
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   namespace: default
   name: mysql-route
@@ -180,7 +178,7 @@ spec:
   entryPoints:
   - mysql
   routes:
-  - match: Host(`mysql.ls.com`) # 首页
+  - match: HostSNI(`*`) # 首页
     services:
     - name: mysql
       port: 3306
