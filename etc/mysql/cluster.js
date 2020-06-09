@@ -4,14 +4,14 @@
 var replicas = 3
 var n = 0
 while(n < replicas){
-	// dba.configureInstance('root@mysql-' + n + '.mysql.default.svc.cluster.local:3306', {clusterAdmin:"'root'@'%'",clusterAdminPassword:'huaren54321',password:'huaren54321','restart': true, interactive: false}) // 配置实例集群	
-	dba.configureInstance('root@mysql-' + n + '.mysql.default.svc.cluster.local:3306', {password:'huaren54321', interactive: false}) // 配置实例集群	
-	// dba.checkInstanceConfiguration('root@mysql-' + n + '.mysql.default.svc.cluster.local:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
+	// dba.configureInstance('root@mysql-' + n + '.mysql:3306', {clusterAdmin:"'root'@'%'",clusterAdminPassword:'huaren54321',password:'huaren54321','restart': true, interactive: false}) // 配置实例集群	
+	dba.configureInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321', interactive: false}) // 配置实例集群	
+	// dba.checkInstanceConfiguration('root@mysql-' + n + '.mysql:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
 	n++
 }
 // shell.connect('root@mysql-0.mysql.default.svc.cluster.local:3306', 'huaren54321') // 连接到主节点
 // 创建集群
-var cluster = dba.createCluster('MyCluster', {interactive: false, localAddress: 'mysql-0.mysql.default.svc.cluster.local'}) // 创建集群
+var cluster = dba.createCluster('MyCluster', {interactive: false, localAddress: 'mysql-0.mysql'}) // 创建集群
 // cluster.describe(); // 集群信息
 // 获取集群信息
 // var cluster = dba.getCluster()    // 获取集群信息

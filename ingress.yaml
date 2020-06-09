@@ -1,4 +1,19 @@
-## 入口路由
+## 服务
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+    targetPort: 3306 # 应用端口
+  ##  protocol: TCP
+  clusterIP: None
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRouteTCP
@@ -8,10 +23,9 @@ metadata:
 spec:
   entryPoints:
   - mysql
-  tls:
-    secretName: mysql-tls
   routes:
-  - match: HostSNI(`mysql.ls.com`) # 首页
+  - kind: Rule
+    match: HostSNI(`mysql.ls.com`) # 首页
     services:
     - name: mysql
       port: 3306

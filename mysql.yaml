@@ -40,6 +40,7 @@ spec:
   ports:
   - port: 3306
     targetPort: 3306 # 应用端口
+  clusterIP: None
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -75,6 +76,8 @@ spec:
           else
             cp /mnt/config-map/slave.cnf /etc/mysql/conf.d
           fi
+          # 修改hostname
+          sed -i 's/mysql-0/mysql-0/' /etc/hostname
         volumeMounts:
         - name: conf
           mountPath: /etc/mysql/conf.d
@@ -178,7 +181,7 @@ spec:
   tls:
     secretName: mysql-tls
   routes:
-  - match: HostSNI(`mysql.ls.com`) # 首页
+  - match: HostSNI(`*`) # 首页
     services:
     - name: mysql
       port: 3306
@@ -187,3 +190,6 @@ spec:
 # openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mysql.ls.com"
 ## 创建secret对象来存储证书 # kubectl create secret mysql-tls 删除
 # kubectl create secret tls mysql-tls --cert=tls.crt --key=tls.key
+
+
+## openssl req -new -sha256 -out tls.csr -key ca.key -config ca.conf

@@ -62,8 +62,10 @@ metadata:
 spec:
   entryPoints:
     - redis
+  tls:
+    secretName: redis-tls
   routes:
-    - match: HostSNI(`*`) # 首页
+    - match: HostSNI(`redis.ls.com`) # 首页
       services:
         - name: redis
           port: 6379
