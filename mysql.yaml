@@ -40,8 +40,6 @@ spec:
   ports:
   - port: 3306
     targetPort: 3306 # 应用端口
-    # protocol: TCP
-  # clusterIP: None
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -95,7 +93,7 @@ spec:
         - name: MYSQL_PASSWORD
           value: "huaren54321"
         - name: MYSQL_DATABASE
-          value: sxg mysql
+          value: sxg
         ports:
         - containerPort: 3306
           protocol: TCP
@@ -177,8 +175,15 @@ metadata:
 spec:
   entryPoints:
   - mysql
+  tls:
+    secretName: mysql-tls
   routes:
-  - match: HostSNI(`*`) # 首页
+  - match: HostSNI(`mysql.ls.com`) # 首页
     services:
     - name: mysql
       port: 3306
+
+## openssl 命令生成 CA 证书
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mysql.ls.com"
+## 创建secret对象来存储证书 # kubectl create secret mysql-tls 删除
+# kubectl create secret tls mysql-tls --cert=tls.crt --key=tls.key
