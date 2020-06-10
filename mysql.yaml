@@ -26,21 +26,6 @@ data:
     # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
     # skip-networking           #  跳过TCP/IP连接
     # skip-host-cache           #  禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
-## 服务
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql
-  labels:
-    app: mysql
-spec:
-  selector:
-    app: mysql
-  ports:
-  - port: 3306
-    targetPort: 3306 # 应用端口
-  clusterIP: None
 ## mysql节点
 ---
 apiVersion: apps/v1
@@ -76,8 +61,6 @@ spec:
           else
             cp /mnt/config-map/slave.cnf /etc/mysql/conf.d
           fi
-          # 修改hostname
-          sed -i 's/mysql-0/mysql-0/' /etc/hostname
         volumeMounts:
         - name: conf
           mountPath: /etc/mysql/conf.d
@@ -168,6 +151,21 @@ spec:
   - name: conf
     hostPath: # 指向本地文件
       path: /mnt/k8s/etc/mysql
+## 服务
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+    targetPort: 3306 # 应用端口
+  clusterIP: None
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -178,8 +176,8 @@ metadata:
 spec:
   entryPoints:
   - mysql
-  tls:
-    secretName: mysql-tls
+  #tls:
+  #  secretName: mysql-tls
   routes:
   - match: HostSNI(`*`) # 首页
     services:
