@@ -27,13 +27,13 @@ docker run -d --name mongo --net net \
 ### mysql1
 docker run -d --name mysql1 \
 --net net -p 3301:3306 \
--v '/mnt/k8s/etc/mysql/my.cnf':/etc/mysql/conf.d/my.cnf \
--v '/mnt/log/mysql1':/var/log/mysql \
--v '/mnt/data/mysql1':/var/lib/mysql \
+-v 'd:/k8s/etc/mysql/my.cnf':/etc/mysql/conf.d/my.cnf \
+-v 'd:/log/mysql1':/var/log/mysql \
+-v 'd:/data/mysql1':/var/lib/mysql \
 -e MYSQL_ROOT_PASSWORD=huaren54321 \
 -e MYSQL_USER=zhrmghg \
 -e MYSQL_PASSWORD=huaren54321 \
--e MYSQL_DATABASE=sxg mysql
+-e MYSQL_DATABASE=lishi
 ## swoole
 docker run -d --name swoole --net net \
 -p 9501:9501 \

@@ -9,9 +9,9 @@ while(n < replicas){
 	// dba.checkInstanceConfiguration('root@mysql-' + n + '.mysql:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
 	n++
 }
-// shell.connect('root@mysql-0.mysql.default.svc.cluster.local:3306', 'huaren54321') // 连接到主节点
+shell.connect('root@mysql-0.mysql:3306', 'huaren54321') // 连接到主节点
 // 创建集群
-var cluster = dba.createCluster('MyCluster', {interactive: false, localAddress: 'mysql-0.mysql'}) // 创建集群
+var cluster = dba.createCluster('MyCluster', {interactive: false, localAddress: 'mysql-0.mysql:33061'}) // 创建集群
 // cluster.describe(); // 集群信息
 // 获取集群信息
 // var cluster = dba.getCluster()    // 获取集群信息

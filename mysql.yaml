@@ -10,7 +10,11 @@ data:
     lower_case_table_names=1
     bind-address=0.0.0.0
     # 打开binlog日志
-    log-bin
+    log-bin	
+    binlog-checksum=NONE
+    enforce-gtid-consistency=ON
+    gtid-mode=ON
+    super_read_only=OFF
     # log_bin_trust_function_creators=1
     # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
     # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
@@ -20,6 +24,12 @@ data:
     [mysqld]
     lower_case_table_names=1
     bind-address=0.0.0.0
+    binlog-checksum=NONE
+    enforce-gtid-consistency=ON
+    gtid-mode=ON
+    super_read_only=OFF
+    
+    group_replication_bootstrap_group=ON
     # 机器设置只读
     # super-read-only
     # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
@@ -55,6 +65,13 @@ spec:
           # Generate mysql server-id from pod ordinal index.
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
+          cat << EOF >> /etc/mysql/conf.d/server-id.cnf
+          # Add an offset to avoid reserved server-id=0 value.
+          [mysqld]
+          # server-id=$((100 + $ordinal))
+          report-host=mysql-${ordinal}.mysql
+          group_replication_local_address= "[2001:db8:85a3:8d3:1319:8a2e:370:7348]:33061"
+          EOF
           # Copy appropriate conf.d files from config-map to emptyDir
           if [[ $ordinal -eq 0 ]]; then
             cp /mnt/config-map/master.cnf /etc/mysql/conf.d
@@ -79,9 +96,11 @@ spec:
         - name: MYSQL_PASSWORD
           value: "huaren54321"
         - name: MYSQL_DATABASE
-          value: sxg
+          value: lishi
         ports:
         - containerPort: 3306
+          protocol: TCP
+        - containerPort: 33061
           protocol: TCP
         volumeMounts:
         - name: data
@@ -163,8 +182,12 @@ spec:
   selector:
     app: mysql
   ports:
-  - port: 3306
+  - name: data
+    port: 3306
     targetPort: 3306 # 应用端口
+  - name: cluster
+    port: 33061
+    targetPort: 33061 # 组复制端口
   clusterIP: None
 ## 入口路由
 ---
