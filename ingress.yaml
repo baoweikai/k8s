@@ -10,8 +10,12 @@ spec:
   selector:
     app: mysql
   ports:
-  - port: 3306
-  #  name: mysql # 应用端口
+  - name: data
+    port: 3306
+    targetPort: 3306 # 应用端口
+  - name: cluster
+    port: 33061
+    targetPort: 3306 # 组复制端口
   clusterIP: None
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -22,9 +26,10 @@ metadata:
 spec:
   entryPoints:
   - mysql
+  #tls:
+  #  secretName: mysql-tls
   routes:
-  - kind: Rule
-    match: HostSNI(`*`) # 首页
+  - match: HostSNI(`*`) # 首页
     services:
     - name: mysql
       port: 3306

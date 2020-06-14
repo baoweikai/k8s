@@ -1,3 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+data:
+  htmldir: lishi/html/
+  nginx.conf: |-
+    # 头部配置
+    user  nginx nginx;    #定义nginx的启动用户，不建议使用root
+    worker_processes  4; #定位为cpu的内核数量，因为我的环境配置是4核，所以就写4。不过这值最多也就是8，8个以上也就没什么意义了，想继续提升性能只能参考下面一项配置
+    worker_cpu_affinity 0001 0010 0100 1000; #此项配置为开启多核CPU，对你先弄提升性能有很大帮助nginx默认是不开启的,1为开启，0为关闭，因此先开启第一个倒过来写，
+    # 第一位0001（关闭第四个、关闭第三个、关闭第二个、开启第一个）
+    # 第二位0010（关闭第四个、关闭第三个、开启第二个、关闭第一个）
+    # 第三位0100（关闭第四个、开启第三个、关闭第二个、关闭第一个）
+    # 后面的依次类推，有智商的应该都可以看懂了吧？  那么如果是16核或者8核cpu，就注意为00000001、00000010、00000100，总位数与cpu核数一样。
+
+    error_log  /var/log/nginx/error.log crit; # 这两项基本不用我说
+    pid        /usr/local/nginx/nginx.pid;
+    # Specifies the value for maximum file descriptors that can be opened by this process.
+    worker_rlimit_nofile 65535; # 这个值为nginx的worker进程打开的最大文件数，如果不配置，会读取服务器内核参数（通过ulimit -a查看），如果内核的值设置太低会让nginx报错（too many open file），但是在此设置后，就会读取自己配置的参数不去读取内核参数
+
+    events
+    {
+      use epoll; #客户端线程轮询方法、内核2.6版本以上的建议使用epoll
+      worker_connections 65535; #设置一个worker可以打开的最大连接数
+    }
+    http {
+      include       mime.types;
+      default_type  application/octet-stream;
+      #charset  gb2312;
+      server_tokens  off; #为错误页面上的nginx版本信息，建议关闭，提升安全性
+
+      server_names_hash_bucket_size 128;
+      client_header_buffer_size 32k;
+      large_client_header_buffers 4 32k;
+      client_max_body_size 8m; # 客户端信息大小限制
+
+      sendfile on; # 开启sendfile（）函数，sendfile可以再磁盘和tcp socket之间互相copy数据。
+      tcp_nopush     on; #告诉nginx在数据包中发送所有头文件，而不是一个一个的发
+
+      # keepalive_timeout 15;
+      keepalive_timeout 120;
+      tcp_nodelay on;
+
+      proxy_intercept_errors on;
+      fastcgi_intercept_errors on;
+      fastcgi_connect_timeout 1300;
+      fastcgi_send_timeout 1300;
+      fastcgi_read_timeout 1300;
+      fastcgi_buffer_size 512k;
+      fastcgi_buffers 4 512k;
+      fastcgi_busy_buffers_size 512k;
+      fastcgi_temp_file_write_size 512k;
+
+      proxy_connect_timeout      20s;
+      proxy_send_timeout         30s;
+      proxy_read_timeout         30s;
+      # gzip压缩
+      gzip on; #gzip是告诉nginx采用gzip后的数据来传输文件，会大量减少我们的发数据的量
+      gzip_min_length  1k;
+      gzip_buffers     4 16k;
+      gzip_http_version 1.0;
+      gzip_comp_level 2;
+      gzip_types text/plain application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
+      gzip_vary on;
+      gzip_disable msie6;
+      # limit_zone  crawler  $binary_remote_addr  10m;
+
+      log_format  main  '$http_host $remote_addr - $remote_user [$time_local] "$request" '
+        '$status $body_bytes_sent "$http_referer" '
+        '"$http_user_agent" "$http_x_forwarded_for" '
+        '$request_time $upstream_response_time';
+
+      #proxy_temp_path和proxy_cache_path指定的路径必须在同一分区,因为它们之间是硬链接的关系
+      #proxy_temp_path /var/cache/nginx/proxy_temp_dir;
+      #设置Web缓存区名称为cache_one，内存缓存空间大小为200MB，1天没有被访问的内容自动清除，硬盘缓存空间大小为30GB。
+      #proxy_cache_path /var/cache/nginx/proxy_cache_dir levels=1:2 keys_zone=cache_one:200m inactive=1d max_size=30g;
+
+      include /usr/local/nginx/conf/vhosts/*.conf; # 
+      error_page 404 = https://www.niu.com/404/;
+      #error_page   500 502 503 504 = http://service.niu.com/alien/;
+    }
 # 内部端口服务
 ---
 apiVersion: v1
@@ -16,6 +100,9 @@ spec:
     - port: 80 # 容器端口
       protocol: TCP
       targetPort: 80 # 应用端口
+    - port: 443 # 容器端口
+      protocol: TCP
+      targetPort: 443 # 应用端口
   selector:
     app: app-nginx
 # nginx部署
@@ -48,19 +135,23 @@ spec:
             - name: https
               containerPort: 443  ## https端口
           volumeMounts:
-            - name: nginx
+            - name: www
               mountPath: /usr/share/nginx/html
             - name: conf
-              mountPath: /etc/nginx/nginx.conf
+              mountPath: /etc/nginx
+              subPath: nginx.conf
             - name: vhost
               mountPath: /etc/nginx/conf.d
       volumes:
-        - name: nginx
+        - name: www
           hostPath: # 指向本地文件
             path: /mnt/www
         - name: conf
-          hostPath: # 指向本地文件
-            path: /mnt/k8s/etc/nginx/nginx.conf
+          configMap:
+            name: php
+            items:
+            - key: nginx.conf
+              # path: path/to/special-key
         - name: vhost
           hostPath: # 指向本地文件
             path: /mnt/k8s/etc/nginx/vhost
@@ -77,13 +168,8 @@ spec:
   tls:
     secretName: ls-tls
   routes:
-    - match: Host(`ls.com`, `www.ls.com`, `b.ls.com`) # 首页
+    - match: Host(`ls.com`, `www.ls.com`, `b.ls.com`, `img.ls.com`) # 首页
       kind: Rule
       services:
         - name: nginx
           port: 80
-    - match: Host(`api.ls.com`) # 首页
-      kind: Rule
-      services:
-        - name: swoole
-          port: 9501

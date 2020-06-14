@@ -1,3 +1,15 @@
+# 账号密码
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql
+type: Opaque
+data:
+  username: zhrmghg
+  password: huaren54321
+  database: lishi
+# 优化配置
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -16,11 +28,11 @@ data:
     gtid-mode=ON
     super_read_only=OFF
     # log_bin_trust_function_creators=1
-    # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
-    # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
-    # skip-networking           #  跳过TCP/IP连接
-    # skip-host-cache           #  禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
-  slave.cnf: |
+    # skip-name-resolve # 跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
+    # skip-grant-tables # 跳过授权表（当mysql登陆密码忘记时的解决办法）
+    # skip-networking # 跳过TCP/IP连接
+    # skip-host-cache # 禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
+  slave.cnf: |-
     [mysqld]
     lower_case_table_names=1
     bind-address=0.0.0.0
@@ -28,15 +40,14 @@ data:
     enforce-gtid-consistency=ON
     gtid-mode=ON
     super_read_only=OFF
-    
-    group_replication_bootstrap_group=ON
+    # group_replication_bootstrap_group=ON
     # 机器设置只读
     # super-read-only
-    # skip-name-resolve         #  跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
-    # skip-grant-tables         #  跳过授权表（当mysql登陆密码忘记时的解决办法）
-    # skip-networking           #  跳过TCP/IP连接
-    # skip-host-cache           #  禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
-## mysql节点
+    # skip-name-resolve # 跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
+    # skip-grant-tables # 跳过授权表（当mysql登陆密码忘记时的解决办法）
+    # skip-networking # 跳过TCP/IP连接
+    # skip-host-cache # 禁用主机名缓存;要想清除主机名缓存，执行FLUSH HOSTS语句或执行mysqladmin flush-hosts命令  slave.cnf: |
+## 数据节点
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -68,9 +79,9 @@ spec:
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
           # Add an offset to avoid reserved server-id=0 value.
           [mysqld]
-          # server-id=$((100 + $ordinal))
+          server-id=$((100 + $ordinal))
           report-host=mysql-${ordinal}.mysql
-          group_replication_local_address= "[2001:db8:85a3:8d3:1319:8a2e:370:7348]:33061"
+          # group_replication_local_address= "[2001:db8:85a3:8d3:1319:8a2e:370:7348]:33061"
           EOF
           # Copy appropriate conf.d files from config-map to emptyDir
           if [[ $ordinal -eq 0 ]]; then
@@ -87,27 +98,32 @@ spec:
       - name: mysql
         image: mysql
         imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c", "mysqld_safe"]
         args: ["--default-authentication-plugin=mysql_native_password"]
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "huaren54321"
+          valueFrom:
+            secretKeyRef:
+              name: mysql
+              key: password
         - name: MYSQL_USER
-          value: "zhrmghg"
+          valueFrom:
+            secretKeyRef:
+              name: mysql
+              key: username
         - name: MYSQL_PASSWORD
-          value: "huaren54321"
+          valueFrom:
+            secretKeyRef:
+              name: mysql
+              key: password
         - name: MYSQL_DATABASE
-          value: lishi
+          valueFrom:
+            secretKeyRef:
+              name: mysql
+              key: dababase
         ports:
         - containerPort: 3306
           protocol: TCP
-        - containerPort: 33061
-          protocol: TCP
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/mysql
-          # subPath: mysql
-        - name: conf
-          mountPath: /etc/mysql/conf.d
         resources:
           requests:
             cpu: 250m
@@ -136,6 +152,12 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           timeoutSeconds: 1
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+          # subPath: mysql
+        - name: conf
+          mountPath: /etc/mysql/conf.d
       volumes:
       - name: conf
         emptyDir: {}
@@ -187,7 +209,7 @@ spec:
     targetPort: 3306 # 应用端口
   - name: cluster
     port: 33061
-    targetPort: 33061 # 组复制端口
+    targetPort: 3306 # 组复制端口
   clusterIP: None
 ## 入口路由
 ---
@@ -199,8 +221,8 @@ metadata:
 spec:
   entryPoints:
   - mysql
-  #tls:
-  #  secretName: mysql-tls
+  tls:
+    secretName: mysql-tls
   routes:
   - match: HostSNI(`*`) # 首页
     services:

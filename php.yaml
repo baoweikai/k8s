@@ -1,24 +1,38 @@
-# 名称空间
-#apiVersion: v1
-#kind: Namespace
-#metadata:
-#  name: lnmp
-# 内部服务端口
----
 apiVersion: v1
-kind: Service
+kind: ConfigMap
 metadata:
   name: php
-  namespace: default
   labels:
-    app: app
-spec:
-  ports:
-    - port: 9000 # 容器端口
-      protocol: TCP
-      targetPort: 9000 # 应用端口
-  selector:
-    app: app-php
+    app: php
+data:
+  htmldir: lishi/api/
+  php.ini: |-
+    # 上传
+    file_uploads = On # 支持文件上床
+    max_file_uploads = 20 # 最大文件上传数
+    upload_max_filesize = 2M # 上传文件最大大小
+    max_execution_time = 30 # 最大执行时间
+    memory_limit = 128M # 单个进程可使用最大内存
+    # 会话
+    session.save_handler = files # 在实际应用中，应当将会话保存在内存中,如redis
+    # session.save_path = '127.0.0.1:3679'
+    # 缓冲输出
+    output_buffering = 4096 # 缓冲 4096 字节的输出之后才会把内容发送给 Web 服务器
+    # 真实路径缓存
+    realpath_cache_size = 64K
+    # 代码缓存
+    opcache.enable=1 # 开启opcache加速
+    opcache.memory_consumption=128 # 缓存内存大小,超出默认使用文件缓存
+    opcache.validate_timestamps=0 # 自动检查脚本变化
+    opcache.revalidate_freq = 60 # 更新缓存频率
+    # 安全
+    open_basedir = /var/www/html # 只能访问网站目录
+    disable_functions = passthru,system,chroot,scandir,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server
+    expose_php = Off # 将此项设置为false即不会再header头输出PHP版本信息。
+    display_errors = Off # 生产环境中，我们应该禁止错误提示，如果是本地开发环境，可以设置为On。
+    log_errors = On # 建议在关闭display_errors后能够把错误信息记录下来，便于查找服务器运行的原因。
+    error_log = /var/log # 设置PHP错误日志存放的目录
+# 内部服务端口
 ---
 apiVersion: v1
 kind: Service
@@ -26,14 +40,18 @@ metadata:
   name: swoole
   namespace: default
   labels:
-    app: app
+    app: php
 spec:
+  sessionAffinity: ClientIP ## 开启了session保持
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800 ## 10800秒,3小时
   ports:
     - port: 9501 # 容器端口
-      protocol: TCP
+      # protocol: TCP
       targetPort: 9501 # 应用端口
   selector:
-    app: app-php
+    app: php
 ---
 apiVersion: apps/v1 # version
 kind: Deployment
@@ -41,41 +59,52 @@ metadata:
   name: php
   namespace: default
   labels:
-    app: app
+    app: php
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: app-php
+      app: php
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: app-php
+        app: php
     spec:
       containers:
         - name: php
           image: registry.cn-beijing.aliyuncs.com/baoweikai/php ## php:fpm-alpine 自定义镜像
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 9000
+            - containerPort: 9501
               name: php
+          command: [ "/bin/sh", "-c", "php /var/www/html/$(HTML_DIR)think swoole" ]
+          env:
+          - name: HTML_DIR
+            valueFrom:
+              configMapKeyRef:
+                name: php
+                key: htmldir
           volumeMounts:
-            - name: php
+            - name: html
               mountPath: /var/www/html
             - name: php-ini
-              mountPath: /usr/local/etc/php/php.ini
+              mountPath: /usr/local/etc/php
+              subPath: php.ini
           ##拉取镜像时的用户认证,没有的时候注释掉这2行
           #imagePullSecrets:
           #- name: registrypullsecret
       volumes:
-        - name: php
+        - name: html
           hostPath:
             path: /mnt/www
         - name: php-ini
-          hostPath:
-            path: /mnt/k8s/etc/php/php.ini
+          configMap:
+            name: php
+            items:
+            - key: php.ini
+              # path: path/to/special-key
 # 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -85,7 +114,7 @@ metadata:
   name: swoole-route
 spec:
   entryPoints:
-    - swoole
+    - http
   routes:
     - match: Host(`api.ls.com`) # 首页
       kind: Rule
