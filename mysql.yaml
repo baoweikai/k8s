@@ -5,9 +5,9 @@ metadata:
   name: mysql
 type: Opaque
 data:
-  username: zhrmghg
-  password: huaren54321
-  database: lishi
+  username: emhybWdoZw== # echo -n 'zhrmghg' | base64 生城
+  password: aHVhcmVuNTQzMjE= # echo -n 'huaren54321' | base64 生城
+  database: bGlzaGk=
 # 优化配置
 ---
 apiVersion: v1
@@ -98,7 +98,7 @@ spec:
       - name: mysql
         image: mysql
         imagePullPolicy: IfNotPresent
-        command: ["/bin/sh", "-c", "mysqld_safe"]
+        # command: ["/bin/sh", "-c", "mysqld_safe"]
         args: ["--default-authentication-plugin=mysql_native_password"]
         env:
         - name: MYSQL_ROOT_PASSWORD
@@ -120,7 +120,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: mysql
-              key: dababase
+              key: database
         ports:
         - containerPort: 3306
           protocol: TCP

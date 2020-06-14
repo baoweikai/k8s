@@ -138,7 +138,7 @@ spec:
             - name: www
               mountPath: /usr/share/nginx/html
             - name: conf
-              mountPath: /etc/nginx
+              mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
             - name: vhost
               mountPath: /etc/nginx/conf.d
@@ -148,10 +148,7 @@ spec:
             path: /mnt/www
         - name: conf
           configMap:
-            name: php
-            items:
-            - key: nginx.conf
-              # path: path/to/special-key
+            name: nginx
         - name: vhost
           hostPath: # 指向本地文件
             path: /mnt/k8s/etc/nginx/vhost
