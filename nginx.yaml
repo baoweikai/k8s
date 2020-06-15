@@ -90,7 +90,7 @@ metadata:
   name: nginx
   namespace: default
   labels:
-    app: app
+    app: nginx
 spec:
   sessionAffinity: ClientIP ## 开启了session保持
   sessionAffinityConfig:
@@ -98,13 +98,15 @@ spec:
       timeoutSeconds: 10800 ## 10800秒,3小时
   ports:
     - port: 80 # 容器端口
+      name: http
       protocol: TCP
       targetPort: 80 # 应用端口
     - port: 443 # 容器端口
+      name: https
       protocol: TCP
       targetPort: 443 # 应用端口
   selector:
-    app: app-nginx
+    app: nginx
 # nginx部署
 ---
 apiVersion: apps/v1 # for versions before 1.8.0 use apps/v1beta1
@@ -113,18 +115,18 @@ metadata:
   name: nginx
   # namespace: default
   labels:
-    app: app
+    app: nginx
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: app-nginx
-  strategy:
-    type: Recreate
+      app: nginx
+  #strategy:
+  #  type: Recreate
   template:
     metadata:
       labels:
-        app: app-nginx
+        app: nginx
     spec:
       containers:
         - name: nginx
@@ -138,8 +140,8 @@ spec:
             - name: www
               mountPath: /usr/share/nginx/html
             - name: conf
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+              mountPath: /etc/nginx111/nginx.conf
+              #subPath: nginx.conf
             - name: vhost
               mountPath: /etc/nginx/conf.d
       volumes:
