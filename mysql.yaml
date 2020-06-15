@@ -26,7 +26,7 @@ data:
     binlog-checksum=NONE
     enforce-gtid-consistency=ON
     gtid-mode=ON
-    super_read_only=OFF
+
     # log_bin_trust_function_creators=1
     # skip-name-resolve # 跳过DNS反向解析过程.（这样就不能使用主机名连接mysql了，只能使用ip连接）
     # skip-grant-tables # 跳过授权表（当mysql登陆密码忘记时的解决办法）
@@ -39,7 +39,7 @@ data:
     binlog-checksum=NONE
     enforce-gtid-consistency=ON
     gtid-mode=ON
-    super_read_only=OFF
+    # super_read_only=OFF
     # group_replication_bootstrap_group=ON
     # 机器设置只读
     # super-read-only
@@ -221,8 +221,8 @@ metadata:
 spec:
   entryPoints:
   - mysql
-  tls:
-    secretName: mysql-tls
+  #tls:
+  #  secretName: mysql-tls
   routes:
   - match: HostSNI(`*`) # 首页
     services:

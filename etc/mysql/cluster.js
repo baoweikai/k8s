@@ -1,11 +1,11 @@
-// mysqlsh -hmysql-0.mysql.default.svc.cluster.local -uroot -phuaren54321 // 登录到主mysql
+// mysqlsh -hmysql-0.mysql -uroot -phuaren54321 // 登录到主mysql
 // dba.help('configureInstance') // 查看命令x详情
 // 初始化配置所有实例
 var replicas = 3
 var n = 0
 while(n < replicas){
 	// dba.configureInstance('root@mysql-' + n + '.mysql:3306', {clusterAdmin:"'root'@'%'",clusterAdminPassword:'huaren54321',password:'huaren54321','restart': true, interactive: false}) // 配置实例集群	
-	dba.configureInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321', interactive: false}) // 配置实例集群	
+	dba.configureInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321', interactive: false, clearReadOnly: true}) // 配置实例集群	
 	// dba.checkInstanceConfiguration('root@mysql-' + n + '.mysql:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
 	n++
 }
@@ -19,11 +19,11 @@ var cluster = dba.createCluster('MyCluster', {interactive: false, localAddress: 
 
 n = 1
 while(n < replicas){
-	cluster.addInstance('root@mysql-' + n + '.mysql.default.svc.cluster.local:3306', {password:'huaren54321'})
+	cluster.addInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321'})
 	n++
 }
 // dba.dropMetadataSchema({force: false}) // 删除集群信息（最后使用）
-// cluster.removeInstance('root@mysql-0.mysql.default.svc.cluster.local:3306') // 移调实例
+// cluster.removeInstance('root@mysql-0.mysql:3306') // 移调实例
 
 /*********参数解析 **********、
 ------configureInstance------
