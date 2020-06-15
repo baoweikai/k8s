@@ -16,8 +16,8 @@ data:
     # 第三位0100（关闭第四个、开启第三个、关闭第二个、关闭第一个）
     # 后面的依次类推，有智商的应该都可以看懂了吧？  那么如果是16核或者8核cpu，就注意为00000001、00000010、00000100，总位数与cpu核数一样。
 
-    error_log  /var/log/nginx/error.log crit; # 这两项基本不用我说
-    pid        /usr/local/nginx/nginx.pid;
+    error_log  /var/log/nginx/error.log warn; # 这两项基本不用我说
+    pid        /var/run/nginx.pid;
     # Specifies the value for maximum file descriptors that can be opened by this process.
     worker_rlimit_nofile 65535; # 这个值为nginx的worker进程打开的最大文件数，如果不配置，会读取服务器内核参数（通过ulimit -a查看），如果内核的值设置太低会让nginx报错（too many open file），但是在此设置后，就会读取自己配置的参数不去读取内核参数
 
@@ -78,9 +78,9 @@ data:
       #设置Web缓存区名称为cache_one，内存缓存空间大小为200MB，1天没有被访问的内容自动清除，硬盘缓存空间大小为30GB。
       #proxy_cache_path /var/cache/nginx/proxy_cache_dir levels=1:2 keys_zone=cache_one:200m inactive=1d max_size=30g;
 
-      include /usr/local/nginx/conf/vhosts/*.conf; # 
-      error_page 404 = https://www.niu.com/404/;
-      #error_page   500 502 503 504 = http://service.niu.com/alien/;
+      include /etc/nginx/conf.d/*.conf; # 
+      # error_page 404 = https://www.niu.com/404/;
+      # error_page   500 502 503 504 = http://service.niu.com/alien/;
     }
 # 内部端口服务
 ---
@@ -140,8 +140,8 @@ spec:
             - name: www
               mountPath: /usr/share/nginx/html
             - name: conf
-              mountPath: /etc/nginx111/nginx.conf
-              #subPath: nginx.conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
             - name: vhost
               mountPath: /etc/nginx/conf.d
       volumes:
