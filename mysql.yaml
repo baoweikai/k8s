@@ -7,7 +7,6 @@ type: Opaque
 data:
   username: emhybWdoZw== # echo -n 'zhrmghg' | base64 生城
   password: aHVhcmVuNTQzMjE= # echo -n 'huaren54321' | base64 生城
-  database: bGlzaGk=
 # 优化配置
 ---
 apiVersion: v1
@@ -17,35 +16,40 @@ metadata:
   labels:
     app: mysql
 data:
-  master.cnf: |-
+  database: lishi
+  my.cnf: |-
     [mysqld]
     port = 3306
     bind-address=0.0.0.0
-    # mysqlx_port = 33061   # MySQL-Shell和MySQL-router支持的X协议
     lower_case_table_names=1
-    # 打开binlog日志
-    log-bin	
-    binlog-checksum=NONE
-    enforce-gtid-consistency=ON
-    gtid-mode=ON # 全局事务标识符打开
-    [mysqld1]
-    port = 33061
-    bind-address=0.0.0.0
-
-    disabled_storage_engines="MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY"
-  slave.cnf: |-
-    [mysqld]
-    port = 3306
-    bind-address=0.0.0.0
-    # mysqlx_port = 33061   # MySQL-Shell和MySQL-router支持的X协议
-    lower_case_table_names=1
-    binlog-checksum=NONE
-    enforce-gtid-consistency=ON
-    gtid-mode=ON
-    # super_read_only
-    [mysqldc] # cluster使用
-    port = 33061
-    bind-address=0.0.0.0
+    log-bin # 打开binlog日志
+    #复制框架
+    gtid_mode=ON # 全局事务标识符打开
+    enforce_gtid_consistency=ON
+    master_info_repository=TABLE
+    relay_log_info_repository=TABLE
+    binlog_checksum=NONE
+    log_slave_updates=ON
+    log_bin=binlog
+    binlog_format=ROW
+    wait_timeout=60000  # 超时时间 如600秒
+    max_connections=2000
+    max_allowed_packet=16M # 最大允许数据量
+    # 组复制设置
+    # server必须为每个事务收集写集合，并使用XXHASH64哈希算法将其编码为散列
+    transaction_write_set_extraction=XXHASH64
+    # 告知插件加入或创建组命名，UUID
+    loose-group_replication_group_name="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    # server启动时不自启组复制,为了避免每次启动自动引导具有相同名称的第二个组,所以设置为OFF。
+    loose-group_replication_start_on_boot=off
+    # 启动组server，种子server，加入组应该连接这些的ip和端口；其他server要加入组得由组成员同意
+    loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
+    loose-group_replication_ip_whitelist="mysql-0.mysql,mysql-1.mysql,mysql-2.mysql"
+    loose-group_replication_bootstrap_group=off
+    # 使用MGR的单主模式
+    loose-group_replication_single_primary_mode=on
+    loose-group_replication_enforce_update_everywhere_checks=off
+    disabled_storage_engines = MyISAM,BLACKHOLE,FEDERATED,CSV,ARCHIVE
   cluster.js: |-
     var replicas = 3
     var n = 0
@@ -75,11 +79,11 @@ metadata:
   name: mysql
 spec: 
   selector: 
-    matchLabels: 
+    matchLabels:
       app: mysql # 匹配 .spec.template.metadata.labels
   serviceName: mysql
   replicas: 3
-  template: 
+  template:
     metadata:
       labels:
         app: mysql # 匹配 .spec.selector.matchLabels
@@ -97,18 +101,19 @@ spec:
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
-          # Add an offset to avoid reserved server-id=0 value.
           [mysqld]
           server-id=$((100 + $ordinal))
+          # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
+          loose-group_replication_local_address="mysql-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
           report-host=mysql-${ordinal}.mysql
-          # group_replication_local_address= "[2001:db8:85a3:8d3:1319:8a2e:370:7348]:33061"
           EOF
           # Copy appropriate conf.d files from config-map to emptyDir
           if [[ $ordinal -eq 0 ]]; then
-            cp /mnt/config-map/master.cnf /etc/mysql/conf.d
+            echo "log-bin" >> /etc/mysql/conf.d/server-id.cnf  # 打开binlog日志
           else
-            cp /mnt/config-map/slave.cnf /etc/mysql/conf.d
+            echo "# super_read_only" >> /etc/mysql/conf.d/server-id.cnf  # 打开binlog日志
           fi
+          cp /mnt/config-map/my.cnf /etc/mysql/conf.d
         volumeMounts:
         - name: conf
           mountPath: /etc/mysql/conf.d
@@ -138,7 +143,7 @@ spec:
               key: password
         - name: MYSQL_DATABASE
           valueFrom:
-            secretKeyRef:
+            configMapKeyRef:
               name: mysql
               key: database
         ports:
