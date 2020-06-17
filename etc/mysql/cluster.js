@@ -11,7 +11,7 @@ while(n < replicas){
 }
 shell.connect('root@mysql-0.mysql:3306', 'huaren54321') // 连接到主节点
 // 创建集群
-var cluster = dba.createCluster('MyCluster', {interactive: false, localAddress: 'mysql-0.mysql:33061'}) // 创建集群
+var cluster = dba.createCluster('MyCluster', {interactive: false}) // 创建集群
 // cluster.describe(); // 集群信息
 // 获取集群信息
 // var cluster = dba.getCluster()    // 获取集群信息

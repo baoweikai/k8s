@@ -99,12 +99,8 @@ spec:
   ports:
     - port: 80 # 容器端口
       name: http
-      protocol: TCP
+      #protocol: TCP
       targetPort: 80 # 应用端口
-    - port: 443 # 容器端口
-      name: https
-      protocol: TCP
-      targetPort: 443 # 应用端口
   selector:
     app: nginx
 # nginx部署
@@ -134,8 +130,6 @@ spec:
           ports:
             - name: http
               containerPort: 80  ## http端口
-            - name: https
-              containerPort: 443  ## https端口
           volumeMounts:
             - name: www
               mountPath: /usr/share/nginx/html
@@ -164,11 +158,18 @@ metadata:
 spec:
   entryPoints:
     - https
-  tls:
-    secretName: ls-tls
   routes:
-    - match: Host(`ls.com`, `www.ls.com`, `b.ls.com`, `img.ls.com`) # 首页
-      kind: Rule
-      services:
-        - name: nginx
-          port: 80
+  - match: Host(`ls.com`, `www.ls.com`, `b.ls.com`, `img.ls.com`) # 首页
+    kind: Rule
+    services:
+    - name: nginx
+      port: 80
+  tls:
+    certResolver: default
+    domains:
+      - main: "ls.com"
+        sans:
+          - "ls.com"
+          - "www.ls.com"
+          - "b.ls.com"
+          - "img.ls.com"

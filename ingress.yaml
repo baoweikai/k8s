@@ -19,7 +19,7 @@ spec:
   clusterIP: None
 ---
 apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRouteTCP
+kind: IngressRoute
 metadata:
   namespace: default
   name: mysql-route
@@ -29,7 +29,7 @@ spec:
   #tls:
   #  secretName: mysql-tls
   routes:
-  - match: HostSNI(`*`) # 首页
+  - match: Host(`*`) # 首页
     services:
     - name: mysql
       port: 3306

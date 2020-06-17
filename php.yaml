@@ -155,11 +155,19 @@ metadata:
   # namespace: default
   name: swoole-route
 spec:
+  #tls:
+  #  - certResolver: default
   entryPoints:
-    - http
+    - https
   routes:
     - match: Host(`api.ls.com`) # 首页
       kind: Rule
       services:
         - name: swoole
           port: 9501
+  tls:
+    certResolver: default
+    domains:
+      - main: "ls.com"
+        sans:
+          - "api.ls.com"

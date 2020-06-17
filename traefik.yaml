@@ -75,6 +75,21 @@ data:
         address: ":6379"        ## 配置 6379 端口，并设置入口名称为 redis
       mongo:
         address: ":27017"       ## 配置 27017 端口，并设置入口名称为 mongo
+    certificatesresolvers:
+      default:
+        acme:
+          tlsChallenge: {}
+          email: "mateng100@126.com"
+          storage: "acme.json"
+          caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+          dnsChallenge:
+            provider: digitalocean
+            delayBeforeCheck: 0
+            resolvers:
+              - "1.1.1.1:53"
+              - "8.8.8.8:53"
+          httpChallenge:
+            entryPoint: http
     providers:
       kubernetesCRD: ""         ## 启用 Kubernetes CRD 方式来配置路由规则
       kubernetesIngress: ""     ## 启动 Kubernetes Ingress 方式来配置路由规则
@@ -194,10 +209,16 @@ metadata:
   name: traefik-route
 spec:
   entryPoints:
-    - http
+    - https
   routes:
     - match: Host(`traefik.ls.com`) ## traefik后台
       kind: Rule
       services:
         - name: traefik
           port: 8080
+  tls:
+    certResolver: default
+    domains:
+      - main: "ls.com"
+        sans:
+          - "traefik.ls.com"
