@@ -23,7 +23,7 @@ data:
     bind-address=0.0.0.0
     lower_case_table_names=1
     log-bin # 打开binlog日志
-    #复制框架
+    ######## 复制框架 ########
     gtid_mode=ON # 全局事务标识符打开
     enforce_gtid_consistency=ON
     master_info_repository=TABLE
@@ -32,23 +32,23 @@ data:
     log_slave_updates=ON
     log_bin=binlog
     binlog_format=ROW
-    wait_timeout=60000  # 超时时间 如600秒
+    wait_timeout=600 # 超时时间 如600秒
     max_connections=2000
     max_allowed_packet=16M # 最大允许数据量
-    # 组复制设置
+    ######## 组复制设置 ########
     # server必须为每个事务收集写集合，并使用XXHASH64哈希算法将其编码为散列
     transaction_write_set_extraction=XXHASH64
     # 告知插件加入或创建组命名，UUID
-    loose-group_replication_group_name="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    # loose-group_replication_group_name="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     # server启动时不自启组复制,为了避免每次启动自动引导具有相同名称的第二个组,所以设置为OFF。
     loose-group_replication_start_on_boot=off
     # 启动组server，种子server，加入组应该连接这些的ip和端口；其他server要加入组得由组成员同意
-    loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
-    loose-group_replication_ip_whitelist="mysql-0.mysql,mysql-1.mysql,mysql-2.mysql"
-    loose-group_replication_bootstrap_group=off
+    #loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
+    #loose-group_replication_ip_whitelist="mysql-0.mysql,mysql-1.mysql,mysql-2.mysql"
+    #loose-group_replication_bootstrap_group=off
     # 使用MGR的单主模式
-    loose-group_replication_single_primary_mode=on
-    loose-group_replication_enforce_update_everywhere_checks=off
+    #loose-group_replication_single_primary_mode=on
+    #loose-group_replication_enforce_update_everywhere_checks=off
     disabled_storage_engines = MyISAM,BLACKHOLE,FEDERATED,CSV,ARCHIVE
   cluster.js: |-
     var replicas = 3
@@ -149,8 +149,6 @@ spec:
         ports:
         - containerPort: 3306
           protocol: TCP
-        - containerPort: 33061 # 组复制端口mysql-shell
-          protocol: TCP
         resources:
           requests:
             cpu: 250m
@@ -240,9 +238,6 @@ spec:
   - name: data
     port: 3306
     targetPort: 3306 # 应用端口
-  - name: cluster
-    port: 33061
-    targetPort: 33061 # 组复制端口
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
