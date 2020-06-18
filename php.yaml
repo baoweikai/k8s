@@ -9,14 +9,14 @@ data:
   php.ini: |-
     [PHP]
     engine = On
-    short_open_tag = Off  # 短标签
+    short_open_tag = Off  ; 短标签
     precision = 14
     ; 缓冲输出		
     output_buffering = 4096  ; 缓冲 4096 字节的输出之后才会把内容发送给 Web 服务器
     ; output_handler =
     ; url_rewriter.tags = "form="
     ; url_rewriter.hosts = ""
-    # 
+    ; 
     zlib.output_compression = Off
     ;zlib.output_compression_level = -1
     ;zlib.output_handler =
@@ -28,32 +28,33 @@ data:
     open_basedir = /var/www/html ; 只能访问网站目录
     disable_functions = passthru,system,chroot,scandir,chgrp,chown,shell_exec,proc_open,proc_get_status,popen,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server
     disable_classes =
-    # 
+    ; 真是路径
     ; ignore_user_abort = On  
     ; realpath_cache_size = 4096k  ; 真实路径缓存
     ; realpath_cache_ttl = 120
-    # 
+    ; zend 设置
     zend.enable_gc = On
     ;zend.multibyte = Off
     ;zend.script_encoding = ""
     zend.exception_ignore_args = On
-    # 
+    ; 
     expose_php = Off  ; 将此项设置为false即不会再header头输出PHP版本信息。
     ; 资源限制
     max_execution_time = 30   ; 最大执行时间
     max_input_time = 60
     ; max_input_nesting_level = 64
     max_input_vars = 100000
-    memory_limit = 128M  ; 单个进程可使用最大内存
+    memory_limit = 2048M  ; 单个进程可使用最大内存
     ; 错误处理
     error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT  ; 错误级别
     display_errors = Off  ; 生产环境中，我们应该禁止错误提示，如果是本地开发环境，可以设置为On。
-    error_log = php_errors.log ; 设置PHP错误日志存放的目录
+    display_startup_errors = Off
     log_errors = On  ; 建议在关闭display_errors后能够把错误信息记录下来，便于查找服务器运行的原因。
     log_errors_max_len = 1024
     ignore_repeated_errors = Off
     ignore_repeated_source = Off
     report_memleaks = On
+    ; error_log = php_errors.log ; 设置PHP错误日志存放的目录
     ; 数据控制
     variables_order = "GPCS"  ; 环境变量 get post cookie server
     request_order = "GP"  ; 全局变量顺序
@@ -138,16 +139,14 @@ spec:
               mountPath: /var/www/html
             - name: php-ini
               mountPath: /usr/local/etc/php/php.ini
-              # subPath: php.ini
+              subPath: php.ini
       volumes:
         - name: html
           hostPath:
             path: /mnt/www
         - name: php-ini
-          #configMap:
-          #  name: php
-          hostPath:
-            path: /mnt/k8s/etc/php/php.ini
+          configMap:
+            name: php
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
