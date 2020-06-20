@@ -50,6 +50,9 @@ data:
     #loose-group_replication_single_primary_mode=on
     #loose-group_replication_enforce_update_everywhere_checks=off
     disabled_storage_engines = MyISAM,BLACKHOLE,FEDERATED,CSV,ARCHIVE
+    [mysqld_safe]
+    log-error=/var/log/mysqld.log
+    pid-file=/var/run/mysqld/mysqld.pid
   cluster.js: |-
     var replicas = 3
     var n = 0
@@ -130,7 +133,7 @@ spec:
       - name: mysql
         image: mysql
         imagePullPolicy: IfNotPresent
-        command: ["mysqld_safe", "-b"]
+        # command: ["mysqld_safe", "-c"]
         args: ["--default-authentication-plugin=mysql_native_password"]
         env:
         - name: MYSQL_ROOT_PASSWORD
