@@ -73,10 +73,10 @@ data:
     ; session.save_handler = files  ; 在实际应用中，应当将会话保存在内存中,如redis
     ; session.save_path = '127.0.0.1:3679'
     [opcache] ; 代码缓存
-    ; opcache.enable=1  ; 开启opcache加速
-    ; opcache.memory_consumption = 128  ; 缓存内存大小,超出默认使用文件缓存
-    ; opcache.validate_timestamps = 0  ; 自动检查脚本变化
-    ; opcache.revalidate_freq = 60  ; 更新缓存频率
+    opcache.enable=1  ; 开启opcache加速
+    opcache.memory_consumption = 128  ; 缓存内存大小,超出默认使用文件缓存
+    opcache.validate_timestamps = 1  ; 自动检查脚本变化
+    opcache.revalidate_freq = 60  ; 更新缓存频率
 # 内部服务端口
 ---
 apiVersion: v1
@@ -154,8 +154,6 @@ metadata:
   # namespace: default
   name: swoole-route
 spec:
-  #tls:
-  #  - certResolver: default
   entryPoints:
     - https
   routes:

@@ -17,6 +17,7 @@ metadata:
     app: mysql
 data:
   database: lishi
+  replicas: "3"
   my.cnf: |-
     [mysqld]
     port = 3306
@@ -44,7 +45,6 @@ data:
     loose-group_replication_start_on_boot=off
     # 启动组server，种子server，加入组应该连接这些的ip和端口；其他server要加入组得由组成员同意
     #loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
-    #loose-group_replication_ip_whitelist="mysql-0.mysql,mysql-1.mysql,mysql-2.mysql"
     #loose-group_replication_bootstrap_group=off
     # 使用MGR的单主模式
     #loose-group_replication_single_primary_mode=on
@@ -100,12 +100,19 @@ spec:
           # Generate mysql server-id from pod ordinal index.
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
+          whitelist='mysql-0.mysql'
+          i=1
+          while(${i} < $(REPLICAS)); do
+            whitelist=${whitelist}', mysql-0.mysql'
+            i++
+          done
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
           [mysqld]
           server-id=$((100 + $ordinal))
           # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
-          loose-group_replication_local_address="mysql-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
+          # loose-group_replication_local_address="mysql-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
           report-host=mysql-${ordinal}.mysql
+          loose-group_replication_ip_whitelist="${whitelist}"
           EOF
           # Copy appropriate conf.d files from config-map to emptyDir
           if [[ $ordinal -eq 0 ]]; then
@@ -123,7 +130,7 @@ spec:
       - name: mysql
         image: mysql
         imagePullPolicy: IfNotPresent
-        # command: ["/bin/sh", "-c", "mysqld_safe"]
+        command: ["mysqld_safe", "-b"]
         args: ["--default-authentication-plugin=mysql_native_password"]
         env:
         - name: MYSQL_ROOT_PASSWORD
@@ -146,6 +153,11 @@ spec:
             configMapKeyRef:
               name: mysql
               key: database
+        - name: REPLICAS
+          valueFrom:
+            configMapKeyRef:
+              name: mysql
+              key: replicas
         ports:
         - containerPort: 3306
           protocol: TCP
