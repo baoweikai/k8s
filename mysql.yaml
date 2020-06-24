@@ -23,7 +23,6 @@ data:
     port = 3306
     bind_address=0.0.0.0
     lower_case_table_names=1
-    log_bin # 打开binlog日志
     ######## 复制框架 ########
     gtid_mode=ON # 全局事务标识符打开
     enforce_gtid_consistency=ON
@@ -31,7 +30,6 @@ data:
     relay_log_info_repository=TABLE
     binlog_checksum=NONE
     log_slave_updates=ON
-    log_bin=binlog
     binlog_format=ROW
     wait_timeout=6000 # 超时时间 如600秒
     max_connections=20000
@@ -107,7 +105,7 @@ spec:
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
           whitelist='mysql-0.mysql'
-          for((i=1;i<=3;i++)); do
+          for((i=1;i<$(REPLICAS);i++)); do
             whitelist="${whitelist}, mysql-${i}.mysql"
           done
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
@@ -120,7 +118,7 @@ spec:
           EOF
           # Copy appropriate conf.d files from config-map to emptyDir
           if [[ $ordinal -eq 0 ]]; then
-            echo "log-bin" >> /etc/mysql/conf.d/server-id.cnf  # 打开binlog日志
+            echo "log_bin=binlog" >> /etc/mysql/conf.d/server-id.cnf  # 主库打开binlog日志
           else
             echo "# super_read_only" >> /etc/mysql/conf.d/server-id.cnf  # 打开binlog日志
           fi
