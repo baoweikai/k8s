@@ -5,7 +5,7 @@ metadata:
   name: redis
   namespace: default
   labels:
-    app: app
+    app: app-redis
 spec:
   ports:
     - port: 6379
@@ -20,7 +20,7 @@ metadata:
   name: redis
   namespace: default
   labels:
-    app: app
+    app: app-redis
 spec:
   # minReadySeconds: 5
   replicas: 3
@@ -37,9 +37,9 @@ spec:
         - name: redis
           image: redis:alpine
           imagePullPolicy: IfNotPresent
-          #env:
-          #  - name: redis_ROOT_PASSWORD
-          #    value: huaren830415
+          env:
+            - name: redis_ROOT_PASSWORD
+              value: huaren830415
           ports:
             - containerPort: 6379
               protocol: TCP
@@ -63,9 +63,16 @@ spec:
   entryPoints:
     - redis
   tls:
-    secretName: redis-tls
+    #secretName: redis-tls
+    certResolver: default
+    domains:
+      - main: "ls.com"
+        sans:
+          - "redis.ls.com"
   routes:
     - match: HostSNI(`redis.ls.com`) # 首页
       services:
         - name: redis
           port: 6379
+
+## ./redis-trib.rb create --replicas 1 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7000

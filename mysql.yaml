@@ -21,9 +21,9 @@ data:
   my.cnf: |-
     [mysqld]
     port = 3306
-    bind-address=0.0.0.0
+    bind_address=0.0.0.0
     lower_case_table_names=1
-    log-bin # 打开binlog日志
+    log_bin # 打开binlog日志
     ######## 复制框架 ########
     gtid_mode=ON # 全局事务标识符打开
     enforce_gtid_consistency=ON
@@ -33,9 +33,9 @@ data:
     log_slave_updates=ON
     log_bin=binlog
     binlog_format=ROW
-    wait_timeout=600 # 超时时间 如600秒
-    max_connections=2000
-    max_allowed_packet=16M # 最大允许数据量
+    wait_timeout=6000 # 超时时间 如600秒
+    max_connections=20000
+    max_allowed_packet=1024M # 最大允许数据量
     ######## 组复制设置 ########
     # server必须为每个事务收集写集合，并使用XXHASH64哈希算法将其编码为散列
     transaction_write_set_extraction=XXHASH64
@@ -58,7 +58,7 @@ data:
     var n = 0
     while(n < replicas){
     	// dba.configureInstance('root@mysql-' + n + '.mysql:3306', {clusterAdmin:"'cluster'@'%'",clusterAdminPassword:'huaren54321',password:'huaren54321','restart': true, interactive: false}) // 配置实例集群	
-    	dba.configureInstance('root@mysql-0.mysql:3306', {password:'huaren54321', interactive: false, clearReadOnly: true}) // 配置实例集群	
+    	dba.configureInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321', interactive: false, clearReadOnly: true}) // 配置实例集群	
     	// dba.checkInstanceConfiguration('root@mysql-' + n + '.mysql:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
     	n++
     }
@@ -69,6 +69,9 @@ data:
     // 获取集群信息
     // var cluster = dba.getCluster()    // 获取集群信息
     // cluster.status()                  // 集群状态查看
+    // \sql  // 切换到sql模式
+    // show global variables like 'group_replication_ip_whitelist';
+    // SET GLOBAL group_replication_ip_whitelist="mysql-0.mysql,mysql-1.mysql,mysql-2.mysql";
     n = 1
     while(n < replicas){
       cluster.addInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321'})
@@ -104,16 +107,14 @@ spec:
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
           whitelist='mysql-0.mysql'
-          i=1
-          while(${i} < $(REPLICAS)); do
-            whitelist=${whitelist}', mysql-0.mysql'
-            i++
+          for((i=1;i<=3;i++)); do
+            whitelist="${whitelist}, mysql-${i}.mysql"
           done
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
           [mysqld]
           server-id=$((100 + $ordinal))
           # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
-          # loose-group_replication_local_address="mysql-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
+          loose-group_replication_local_address="mysql-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
           report-host=mysql-${ordinal}.mysql
           loose-group_replication_ip_whitelist="${whitelist}"
           EOF
@@ -253,6 +254,26 @@ spec:
   - name: data
     port: 3306
     targetPort: 3306 # 应用端口
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-write
+  labels:
+    app: mysql
+spec:
+  #sessionAffinity: ClientIP ## 开启了session保持
+  #sessionAffinityConfig:
+  #  clientIP:
+  #    timeoutSeconds: 10800 ## 10800秒,3小时
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: mysql-write
+  ports:
+  - name: data
+    port: 3306
+    targetPort: 3306 # 应用端口
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -270,6 +291,7 @@ spec:
     services:
     - name: mysql
       port: 3306
+
 ## openssl 命令生成 CA 证书
 # openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mysql.ls.com"
 ## 创建secret对象来存储证书 # kubectl create secret mysql-tls 删除
