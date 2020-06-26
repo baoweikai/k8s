@@ -1,13 +1,12 @@
-# 基于openjdk8创建镜像,可自行替换centos
-
-FROM centos
-MAINTAINER <kugua mateng100@126.com>
+FROM debian:buster-slim
+ENV container docker
 LABEL Description="mysql-router"
-COPY innodb/mysql-router-community-8.0.18-1.el8.x86_64.rpm /tmp/
-COPY innodb/mysql-shell-8.0.18-1.el8.x86_64.rpm /tmp/
-RUN yum update -y
-RUN yum install -y python3 \
-&& rpm -ivh /tmp/mysql-router-community-8.0.18-1.el8.x86_64.rpm \
-&& rpm -ivh /tmp/mysql-shell-8.0.18-1.el8.x86_64.rpm \
-&& rm -f /tmp/mysql-router-community-8.0.18-1.el8.x86_64.rpm /tmp/mysql-shell-8.0.18-1.el8.x86_64.rpm
-# CMD ["mysqlrouter","console"]
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends ca-certificates wget; \
+	wget -O /mnt/mysql-router-community.deb "https://dev.mysql.com/get/Downloads/MySQL-Router/mysql-router-community_8.0.20-1debian10_amd64.deb"; \
+	wget -O /mnt/mysql-router.deb "https://dev.mysql.com/get/Downloads/MySQL-Router/mysql-router_8.0.20-1debian10_amd64.deb"; \
+	apt-get install -y /mnt/mysql-router-community.deb /mnt/mysql-router.deb; \
+	rm -rf /mnt/mysql-router-community.deb /mnt/mysql-router.deb; \
+	rm -rf /var/lib/apt/lists/*;
+CMD ["mysqlrouter --config /etc/mysqlrouter/mysqlrouter.cnf &"]
