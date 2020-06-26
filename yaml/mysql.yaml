@@ -60,6 +60,32 @@ data:
     [mysqld_safe]
     log-error=/var/log/mysqld.log
     pid-file=/var/run/mysqld/mysqld.pid
+  mysqlrouter.conf: |-
+    # File automatically generated during MySQL Router bootstrap
+    [DEFAULT]
+    logging_folder=/var/log/myrouter
+    runtime_folder=/var/run/myrouter
+    data_folder=/var/lib/myrouter
+    keyring_path=/var/lib/myrouter/keyring
+    master_key_path=/opt/routers/myrouter/mysqlrouter.key
+    connect_timeout=30
+    read_timeout=30
+    [logger]
+    level = INFO
+    [routing:masters]
+    bind_address=0.0.0.0
+    bind_port=7001
+    destinations=mysql-0.mysql:3306 # 指定后端mysql server 列表
+    routing_strategy=round-robin
+    protocol=classic
+    mode=read-write
+    [routing:slaves]
+    bind_address=0.0.0.0 # 指定绑定的端口
+    bind_port=7002 # 指定绑定的端口
+    destinations=mysql-0.mysql:3306,mysql-1.mysql:3306,mysql-2.mysql:3306 # 指定后端mysql server 列表
+    routing_strategy=round-robin 
+    protocol=classic
+    mode=read-only # 指定该服务只能做read操作
   cluster.js: |-
     var replicas = 3
     var n = 0
@@ -228,7 +254,7 @@ metadata:
     app: mysql
 spec:
   containers:
-    - name: mysqlsh
+    - name: myshell
       image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-shell
       imagePullPolicy: IfNotPresent
       command:
@@ -240,6 +266,28 @@ spec:
       - name: conf
         mountPath: /etc/mysql/cluster.js
         subPath: cluster.js
+  volumes:
+  - name: conf
+    configMap:
+      name: mysql
+## mysql-router
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-router
+  labels:
+    app: mysql
+spec:
+  containers:
+    - name: myrouter
+      image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-router
+      imagePullPolicy: IfNotPresent
+      command: ["mysqlrouter --config /etc/mysqlrouter/mysqlrouter.conf &"]
+      volumeMounts:
+      - name: conf
+        mountPath: /etc/mysqlrouter/mysqlrouter.conf
+        subPath: mysqlrouter.conf
   volumes:
   - name: conf
     configMap:
@@ -262,16 +310,15 @@ spec:
   selector:
     app: mysql
   ports:
-  - name: data
-    port: 3306
-    targetPort: 3306 # 应用端口
+  - port: 7001
+    targetPort: 7001 # 应用端口
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql-write
   labels:
-    app: mysql
+    app: mysql-router
 spec:
   #sessionAffinity: ClientIP ## 开启了session保持
   #sessionAffinityConfig:
@@ -280,11 +327,10 @@ spec:
   type: ClusterIP
   clusterIP: None
   selector:
-    app: mysql-write
+    app: mysql
   ports:
-  - name: data
-    port: 3306
-    targetPort: 3306 # 应用端口
+  - port: 7002
+    targetPort: 7002 # 应用端口
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -301,7 +347,7 @@ spec:
   - match: HostSNI(`*`) # 首页
     services:
     - name: mysql
-      port: 3306
+      port: 7001
 
 ## openssl 命令生成 CA 证书
 # openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mysql.ls.com"
