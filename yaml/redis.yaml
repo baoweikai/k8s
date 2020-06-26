@@ -1,0 +1,93 @@
+# 账号密码
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis
+type: Opaque
+data:
+  username: emhybWdoZw== # echo -n 'zhrmghg' | base64 生城
+  password: aHVhcmVuNTQzMjE= # echo -n 'huaren54321' | base64 生城
+# 内部端口服务
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: default
+  labels:
+    app: app-redis
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: app-redis
+# redis控制器
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: default
+  labels:
+    app: app-redis
+spec:
+  # minReadySeconds: 5
+  replicas: 3
+  serviceName: redis
+  selector:
+    matchLabels:
+      app: app-redis
+  template:
+    metadata:
+      labels:
+        app: app-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:alpine
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: REDIS_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql
+                key: password
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+          volumeMounts:
+            - name: conf
+              mountPath: /usr/local/etc/redis/redis.conf
+        #imagePullSecrets:
+        # - name: registrypullsecret
+      volumes:
+        - name: conf
+          hostPath: # 指向本地文件
+            path: /mnt/k8s/etc/redis/redis.conf
+# 入口路由
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  namespace: default
+  name: redis-route
+spec:
+  entryPoints:
+    - redis
+  tls:
+    #secretName: redis-tls
+    certResolver: default
+    domains:
+      - main: "ls.com"
+        sans:
+          - "redis.ls.com"
+  routes:
+    - match: HostSNI(`redis.ls.com`) # 首页
+      services:
+        - name: redis
+          port: 6379
+
+## ./redis-trib.rb create --replicas 1 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7000
