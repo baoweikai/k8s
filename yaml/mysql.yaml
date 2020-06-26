@@ -283,7 +283,7 @@ spec:
     - name: myrouter
       image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-router
       imagePullPolicy: IfNotPresent
-      command: ["mysqlrouter --config /etc/mysqlrouter/mysqlrouter.conf &"]
+      command: ["mysqlrouter --config /etc/mysqlrouter/mysqlrouter.conf"]
       volumeMounts:
       - name: conf
         mountPath: /etc/mysqlrouter/mysqlrouter.conf
