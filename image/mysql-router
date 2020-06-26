@@ -9,4 +9,4 @@ RUN set -eux; \
 	apt-get install -y /mnt/mysql-router-community.deb /mnt/mysql-router.deb; \
 	rm -rf /mnt/mysql-router-community.deb /mnt/mysql-router.deb; \
 	rm -rf /var/lib/apt/lists/*;
-CMD ["mysqlrouter --config /etc/mysqlrouter/mysqlrouter.conf"]
+CMD ["mysqlrouter"]
