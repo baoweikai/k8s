@@ -6,7 +6,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 ## curl curl-dev dpkg-dev dpkg file g++ gcc git libc-dev make cmake pkgconf re2c libcurl automake autoconf bison libtool openssl-dev libaio-dev ncurses-dev libgcrypt-dev libev-dev zlib-dev
 RUN apk add g++ gcc make cmake bison curl curl-dev libc-dev libaio-dev ncurses-dev libgcrypt-dev openssl-dev libev-dev
 # 安装xtrabackup扩展
-RUN curl -fsSL 'https://www.percona.com/downloads/Percona-XtraBackup-LATEST/Percona-XtraBackup-8.0.12/source/tarball/percona-xtrabackup-8.0.12.tar.gz' -o xtrabackup.tar.gz \
+RUN curl -fsSL 'https://www.percona.com/downloads/Percona-XtraBackup-LATEST/Percona-XtraBackup-8.0.13/source/debian/percona-xtrabackup-80_8.0.13.orig.tar.gz' -o xtrabackup.tar.gz \
     && mkdir -p /tmp/xtrabackup \
     && tar -xf xtrabackup.tar.gz -C /tmp/xtrabackup --strip-components=1 \
 	&& rm xtrabackup.tar.gz \
