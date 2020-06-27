@@ -15,11 +15,11 @@ Vagrant.configure("2") do |config|
 	gateway_ip = '192.168.137.1'
 	# systemctl restart network # centos7网络重载
 	$script = <<-SCRIPT
-		sed -i '$a IPADDR='$1 /etc/sysconfig/network-scripts/ifcfg-eth0
-		sed -i 's/"dhcp"/"static"/g' /etc/sysconfig/network-scripts/ifcfg-eth0
-		sed -i '$a NETMASK=255.255.255.0' /etc/sysconfig/network-scripts/ifcfg-eth0
-		sed -i '$a GATEWAY='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
-		sed -i '$a DNS1='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
+		#sed -i '$a IPADDR='$1 /etc/sysconfig/network-scripts/ifcfg-eth0
+		#sed -i 's/"dhcp"/"static"/g' /etc/sysconfig/network-scripts/ifcfg-eth0
+		#sed -i '$a NETMASK=255.255.255.0' /etc/sysconfig/network-scripts/ifcfg-eth0
+		#sed -i '$a GATEWAY='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
+		#sed -i '$a DNS1='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
 		sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 		sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config
 		systemctl restart sshd
@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
 	# nmcli d reapply eth0
 	servers.each do |server_name, server_ip|
 		config.vm.define server_name, autostart: true do |server|
-			## server.vm.network "private_network", ip: "server_ip", auto_config: false
+			server.vm.network "private_network", ip: "server_ip", auto_config: false
 			server.vm.host_name = server_name
 			server.vm.provision "shell" do |s| 
 				s.inline = $script
@@ -49,3 +49,5 @@ end
 
 # ssh-keygen -R 192.168.137.10
 # cat /proc/version # 查看版本
+# vagrant halt
+# vagrant up --provision
