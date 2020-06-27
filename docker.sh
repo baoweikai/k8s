@@ -39,3 +39,9 @@ docker run -d --name swoole --net net \
 -p 9501:9501 \
 -v 'd:/www':/var/html:rw \
 phpswoole/swoole /var/html/swoole
+
+sealos init --passwd huaren830415 \
+	--master 192.168.137.10 \
+	--node 192.168.137.11 --node 192.168.137.12 --node 192.168.137.13 \
+	--pkg-url /mnt/k8s/kube1.18.4.tar.gz \
+	--version v1.18.4
