@@ -121,6 +121,9 @@ spec:
         - name: php
           image: registry.cn-beijing.aliyuncs.com/baoweikai/php ## php:fpm-alpine 自定义镜像
           imagePullPolicy: IfNotPresent
+          ##拉取镜像时的用户认证,没有的时候注释掉这2行
+          #imagePullSecrets:
+          #- name: registrypullsecret
           ports:
             - containerPort: 9501
               # name: php
@@ -131,9 +134,19 @@ spec:
               configMapKeyRef:
                 name: php
                 key: htmldir
-          ##拉取镜像时的用户认证,没有的时候注释掉这2行
-          #imagePullSecrets:
-          #- name: registrypullsecret
+          livenessProbe: ## 存活探针,容器是否正常运行,如果失败将重启pod
+            httpGet:
+              path: /
+              port: 9501
+            initialDelaySeconds: 30
+            periodSeconds: 10 # 探测频率,默认10
+            timeoutSeconds: 5 # 超时秒数,默认1
+          readinessProbe: ## 就绪探针,失败将从后端负载中剔除
+            tcpSocket:
+              port: 9501
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2 # 超时设定
           volumeMounts:
             - name: html
               mountPath: /var/www/html

@@ -23,6 +23,7 @@ data:
     port = 3306
     bind_address=0.0.0.0
     lower_case_table_names=1
+    # symbolic_links=0
     ######## 复制框架 ########
     gtid_mode=ON # 全局事务标识符打开
     enforce_gtid_consistency=ON
@@ -35,14 +36,14 @@ data:
     max_connections=20000
     max_allowed_packet=1024M # 最大允许数据量
     #要同步的数据库
-    binlog-do-db = datingcenter 
+    binlog-do-db = lishi 
     #不需要同步的数据库
     binlog-ignore-db = mysql 
     binlog_ignore_db = information_schema 
     binlog_ignore_db = performance_schema 
     binlog_ignore_db = sys
     sync_binlog = 1
-    expire_logs_days =7 #二进制日志自动删除/过期的天数。默认值为0，表示不自动删除。
+    binlog_expire_logs_seconds = 252000 # 二进制日志自动删除/过期的秒数。默认值为0，表示不自动删除。
     ######## 组复制设置 ########
     # server必须为每个事务收集写集合，并使用XXHASH64哈希算法将其编码为散列
     transaction_write_set_extraction=XXHASH64
@@ -51,41 +52,15 @@ data:
     # server启动时不自启组复制,为了避免每次启动自动引导具有相同名称的第二个组,所以设置为OFF。
     loose-group_replication_start_on_boot=off
     # 启动组server，种子server，加入组应该连接这些的ip和端口；其他server要加入组得由组成员同意
-    #loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
-    #loose-group_replication_bootstrap_group=off
-    # 使用MGR的单主模式
-    #loose-group_replication_single_primary_mode=on
-    #loose-group_replication_enforce_update_everywhere_checks=off
+    loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
+    loose-group_replication_bootstrap_group=off
+    # 使用MGR的多主模式
+    loose-group_replication_single_primary_mode=off # 单主模式on
+    loose-group_replication_enforce_update_everywhere_checks=on # 单主模式为off
     disabled_storage_engines = MyISAM,BLACKHOLE,FEDERATED,CSV,ARCHIVE
     [mysqld_safe]
     log-error=/var/log/mysqld.log
     pid-file=/var/run/mysqld/mysqld.pid
-  mysqlrouter.conf: |-
-    # File automatically generated during MySQL Router bootstrap
-    [DEFAULT]
-    logging_folder=/var/log/myrouter
-    runtime_folder=/var/run/myrouter
-    data_folder=/var/lib/myrouter
-    keyring_path=/var/lib/myrouter/keyring
-    master_key_path=/opt/routers/myrouter/mysqlrouter.key
-    connect_timeout=30
-    read_timeout=30
-    [logger]
-    level = INFO
-    [routing:masters]
-    bind_address=0.0.0.0
-    bind_port=7001
-    destinations=mysql-0.mysql:3306 # 指定后端mysql server 列表
-    routing_strategy=round-robin
-    protocol=classic
-    mode=read-write
-    [routing:slaves]
-    bind_address=0.0.0.0 # 指定绑定的端口
-    bind_port=7002 # 指定绑定的端口
-    destinations=mysql-0.mysql:3306,mysql-1.mysql:3306,mysql-2.mysql:3306 # 指定后端mysql server 列表
-    routing_strategy=round-robin 
-    protocol=classic
-    mode=read-only # 指定该服务只能做read操作
   cluster.js: |-
     var replicas = 3
     var n = 0
@@ -119,17 +94,17 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql
+  name: mysql-master
 spec: 
   selector: 
     matchLabels:
-      app: mysql # 匹配 .spec.template.metadata.labels
+      app: mysql-master # 匹配 .spec.template.metadata.labels
   serviceName: mysql
   replicas: 3
   template:
     metadata:
       labels:
-        app: mysql # 匹配 .spec.selector.matchLabels
+        app: mysql-master # 匹配 .spec.selector.matchLabels
     spec:
       initContainers:
       - name: init-mysql
@@ -209,7 +184,19 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
-        livenessProbe: ## 存货探针
+        livenessProbe: ## 存活探针
+          exec:
+            command:
+            - /bin/sh
+            - "-c"
+            - MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
+            - mysql -h 127.0.0.1 -u root -e "SELECT 1"
+          #tcpSocket:
+          #  port: 3306
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 2 # 超时设定
+        readinessProbe: ## 就绪探针
           exec:
             command:
             - /bin/sh
@@ -219,17 +206,6 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-        readinessProbe: ## 状态探针
-          exec:
-            # Check we can execute queries over TCP (skip-networking is off).
-            command: 
-              - /bin/sh
-              - "-c"
-              - MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
-              - mysql -h 127.0.0.1 -u root -e "SELECT 1"
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          timeoutSeconds: 1
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
@@ -270,28 +246,6 @@ spec:
   - name: conf
     configMap:
       name: mysql
-## mysql-router
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: mysql-router
-  labels:
-    app: mysql
-spec:
-  containers:
-    - name: myrouter
-      image: registry.cn-beijing.aliyuncs.com/baoweikai/mysql-router
-      imagePullPolicy: IfNotPresent
-      command: ["mysqlrouter --config /etc/mysqlrouter/mysqlrouter.conf"]
-      volumeMounts:
-      - name: conf
-        mountPath: /etc/mysqlrouter/mysqlrouter.conf
-        subPath: mysqlrouter.conf
-  volumes:
-  - name: conf
-    configMap:
-      name: mysql
 ## 服务
 ---
 apiVersion: v1
@@ -310,27 +264,8 @@ spec:
   selector:
     app: mysql
   ports:
-  - port: 7001
-    targetPort: 7001 # 应用端口
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-write
-  labels:
-    app: mysql-router
-spec:
-  #sessionAffinity: ClientIP ## 开启了session保持
-  #sessionAffinityConfig:
-  #  clientIP:
-  #    timeoutSeconds: 10800 ## 10800秒,3小时
-  type: ClusterIP
-  clusterIP: None
-  selector:
-    app: mysql
-  ports:
-  - port: 7002
-    targetPort: 7002 # 应用端口
+  - port: 3306
+    targetPort: 3306 # 应用端口
 ## 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -346,8 +281,8 @@ spec:
   routes:
   - match: HostSNI(`*`) # 首页
     services:
-    - name: mysql
-      port: 7001
+    - name: mysql-master
+      port: 3306
 
 ## openssl 命令生成 CA 证书
 # openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mysql.ls.com"
