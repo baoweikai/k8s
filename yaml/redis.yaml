@@ -82,7 +82,7 @@ spec:
               command:
               - /bin/sh
               - "-c"
-              - redis-cli -h 127.0.0.1 -p 6379 -a "${MYSQL_ROOT_PASSWORD}"
+              - redis-cli -h 127.0.0.1 -p 6379 -a "${REDIS_ROOT_PASSWORD}"
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
