@@ -126,7 +126,7 @@ spec:
           #- name: registrypullsecret
           ports:
             - containerPort: 9501
-              # name: php
+              # name: swoole
           command: [ "/bin/sh", "-c", "php /var/www/html/$(HTML_DIR)think swoole" ]
           env:
           - name: HTML_DIR
@@ -135,8 +135,8 @@ spec:
                 name: php
                 key: htmldir
           livenessProbe: ## 存活探针,容器是否正常运行,如果失败将重启pod
-            httpGet:
-              path: /
+            tcpSocket:
+              # path: /
               port: 9501
             initialDelaySeconds: 30
             periodSeconds: 10 # 探测频率,默认10

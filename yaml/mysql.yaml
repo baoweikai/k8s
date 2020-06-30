@@ -281,7 +281,7 @@ spec:
   routes:
   - match: HostSNI(`*`) # 首页
     services:
-    - name: mysql-master
+    - name: mysql
       port: 3306
 
 ## openssl 命令生成 CA 证书
