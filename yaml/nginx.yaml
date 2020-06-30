@@ -152,15 +152,15 @@ spec:
               path: /
               port: 80
             initialDelaySeconds: 30 # 初始化之后30秒再他探测
-            periodSeconds: 10
+            periodSeconds: 10 # 探测间隔10秒
             timeoutSeconds: 5
           readinessProbe: ## 就绪探针,失败将从后端负载中剔除
             httpGet:
               path: /
               port: 80
             initialDelaySeconds: 30 # 初始化之后30秒再他探测
-            periodSeconds: 10
-            timeoutSeconds: 5
+            periodSeconds: 10 # 探测间隔10秒
+            timeoutSeconds: 5 # 超时5秒探测失败
           volumeMounts:
             - name: www
               mountPath: /usr/share/nginx/html

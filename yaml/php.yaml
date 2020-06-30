@@ -136,7 +136,6 @@ spec:
                 key: htmldir
           livenessProbe: ## 存活探针,容器是否正常运行,如果失败将重启pod
             tcpSocket:
-              # path: /
               port: 9501
             initialDelaySeconds: 30
             periodSeconds: 10 # 探测频率,默认10

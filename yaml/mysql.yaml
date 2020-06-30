@@ -118,16 +118,16 @@ spec:
           # Generate mysql server-id from pod ordinal index.
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
-          whitelist='mysql-0.mysql'
+          whitelist='mysql-master-0.mysql'
           for((i=1;i<$(REPLICAS);i++)); do
-            whitelist="${whitelist}, mysql-${i}.mysql"
+            whitelist="${whitelist}, mysql-master-${i}.mysql"
           done
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
           [mysqld]
           server-id=$((100 + $ordinal))
+          report-host=mysql-master-${ordinal}.mysql
           # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
-          loose-group_replication_local_address="mysql-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
-          report-host=mysql-${ordinal}.mysql
+          loose-group_replication_local_address="mysql-master-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
           loose-group_replication_ip_whitelist="${whitelist}"
           EOF
           # Copy appropriate conf.d files from config-map to emptyDir
@@ -191,8 +191,6 @@ spec:
             - "-c"
             - MYSQL_PWD="${MYSQL_ROOT_PASSWORD}"
             - mysql -h 127.0.0.1 -u root -e "SELECT 1"
-          #tcpSocket:
-          #  port: 3306
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 2 # 超时设定

@@ -1,6 +1,10 @@
 # you're doing. 2 代表版本
 Vagrant.configure("2") do |config|
-  config.vm.box = "cos8" ## vagrant box add cos7 centos7.box
+  config.vm.box = "cos7" ## vagrant box add cos7 centos7.box
+	config.vm.provider "hyperv" do |v|
+		v.memory = 2048
+		v.cpus = 2
+	end
   #config.vm.boot_timeout = 360
   #config.ssh.username = "vagrant"
   #config.ssh.password = "vagrant"
@@ -12,12 +16,12 @@ Vagrant.configure("2") do |config|
 	}
 	gateway_ip = '192.168.137.1'
 	$script = <<-SCRIPT
-		#sed -i 's/"dhcp"/"static"/g' /etc/sysconfig/network-scripts/ifcfg-eth0
-		#sed -i '$a # 设置IP地址' /etc/sysconfig/network-scripts/ifcfg-eth0
-		#sed -i '$a IPADDR='$1 /etc/sysconfig/network-scripts/ifcfg-eth0
-		#sed -i '$a NETMASK=255.255.255.0' /etc/sysconfig/network-scripts/ifcfg-eth0
-		#sed -i '$a GATEWAY='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
-		#sed -i '$a DNS1='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
+		sed -i 's/"dhcp"/"static"/g' /etc/sysconfig/network-scripts/ifcfg-eth0
+		sed -i '$a # 设置IP地址' /etc/sysconfig/network-scripts/ifcfg-eth0
+		sed -i '$a IPADDR='$1 /etc/sysconfig/network-scripts/ifcfg-eth0
+		sed -i '$a NETMASK=255.255.255.0' /etc/sysconfig/network-scripts/ifcfg-eth0
+		sed -i '$a GATEWAY='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
+		sed -i '$a DNS1='$2 /etc/sysconfig/network-scripts/ifcfg-eth0
 		sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 		sed -i 's/#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config
 		systemctl restart sshd
@@ -35,11 +39,7 @@ Vagrant.configure("2") do |config|
 	servers.each do |server_name, server_ip|
 		config.vm.define "#{server_name}", autostart: true do |node|
 			node.vm.hostname = "#{server_name}"
-		  node.vm.network "private_network", ip: "#{server_ip}", auto_config: true
-		  node.vm.provider "hyperv" do |v|
-		  	v.memory = 2048
-		  	v.cpus = 2
-		  end
+		  # node.vm.network "private_network", ip: "#{server_ip}", auto_config: true
 			node.vm.provision "shell" do |s|
 				s.inline = $script
 				s.args = [server_ip, gateway_ip]
