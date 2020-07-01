@@ -89,6 +89,45 @@ data:
     // cluster.dissolve({force:true});  # 解散集群
     // cluster.removeInstance("root@172.16.220.10:3346", {force:true}); //  强制删除节点
     // cluster.rejoinInstance('root@172.16.220.10:3346') // 重启节点后，需要手动加入
+# pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi
+  storageClassName: local-storage
+## pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata: 
+  name: mysql-pv
+spec:  
+  capacity:
+    storage: 4Gi 
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete  
+  storageClassName: local-storage  
+  local:  
+    path: /mnt/data/mysql
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In # NotIn
+          values:
+          - node1
+          - node2
+          - node3
 ## 数据节点
 ---
 apiVersion: apps/v1
@@ -216,8 +255,10 @@ spec:
         configMap:
           name: mysql
       - name: data
-        hostPath: # 指向本地文件
-          path: /mnt/data/mysql
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+        #hostPath: # 指向本地文件
+        #  path: /mnt/data/mysql
 ## mysql-shell
 ---
 apiVersion: v1

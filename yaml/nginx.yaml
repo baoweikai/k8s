@@ -1,3 +1,5 @@
+# 配置
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -171,8 +173,10 @@ spec:
               mountPath: /etc/nginx/conf.d
       volumes:
         - name: www
-          hostPath: # 指向本地文件
-            path: /mnt/www
+          #hostPath: # 指向本地文件
+          #  path: /mnt/www
+          persistentVolumeClaim:
+            claimName: www-pvc
         - name: conf
           configMap:
             name: nginx
