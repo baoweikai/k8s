@@ -93,7 +93,7 @@ spec:
       volumes:
         - name: conf
           configMap:
-            name: redis.conf
+            name: redis
 # 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1

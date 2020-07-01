@@ -65,12 +65,12 @@ data:
     var replicas = 3
     var n = 0
     while(n < replicas){
-    	// dba.configureInstance('root@mysql-' + n + '.mysql:3306', {clusterAdmin:"'cluster'@'%'",clusterAdminPassword:'huaren54321',password:'huaren54321','restart': true, interactive: false}) // 配置实例集群	
-    	dba.configureInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321', interactive: false, clearReadOnly: true}) // 配置实例集群	
-    	// dba.checkInstanceConfiguration('root@mysql-' + n + '.mysql:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
+    	// dba.configureInstance('root@mysql-master-' + n + '.mysql:3306', {clusterAdmin:"'cluster'@'%'",clusterAdminPassword:'huaren54321',password:'huaren54321','restart': true, interactive: false}) // 配置实例集群	
+    	dba.configureInstance('root@mysql-master-' + n + '.mysql:3306', {password:'huaren54321', interactive: false, clearReadOnly: true}) // 配置实例集群	
+    	// dba.checkInstanceConfiguration('root@mysql-master-' + n + '.mysql:3306', {password:'huaren54321','restart': true, interactive: false})      // 校验实例配置
     	n++
     }
-    shell.connect('root@mysql-0.mysql:3306', 'huaren54321') // 连接到主节点
+    shell.connect('root@mysql-master-0.mysql:3306', 'huaren54321') // 连接到主节点
     // 创建集群
     var cluster = dba.createCluster('MyCluster', {interactive: false, multiPrimary: true, force: true}) // 创建集群
     // cluster.describe(); // 集群信息
@@ -82,7 +82,7 @@ data:
     // SET GLOBAL group_replication_ip_whitelist="mysql-0.mysql,mysql-1.mysql,mysql-2.mysql";
     n = 1
     while(n < replicas){
-      cluster.addInstance('root@mysql-' + n + '.mysql:3306', {password:'huaren54321'})
+      cluster.addInstance('root@mysql-master-' + n + '.mysql:3306', {password:'huaren54321'})
       n++
     }
     // dba.dropMetadataSchema()   mysqlshell 清空集群
@@ -132,7 +132,7 @@ spec:
           EOF
           # Copy appropriate conf.d files from config-map to emptyDir
           if [[ $ordinal -eq 0 ]]; then
-            echo "log_bin=binlog" >> /etc/mysql/conf.d/server-id.cnf  # 主库打开binlog日志
+            echo "log_bin" >> /etc/mysql/conf.d/server-id.cnf  # 主库打开binlog日志
           else
             echo "# super_read_only" >> /etc/mysql/conf.d/server-id.cnf  # 打开binlog日志
           fi
@@ -260,7 +260,7 @@ spec:
   type: ClusterIP
   clusterIP: None
   selector:
-    app: mysql
+    app: mysql-master
   ports:
   - port: 3306
     targetPort: 3306 # 应用端口
