@@ -14,7 +14,7 @@ RUN apk add --no-cache freetype-dev libpng-dev libjpeg-turbo-dev \
 		&& docker-php-ext-configure gd --with-freetype --with-jpeg \
 		&& docker-php-ext-install -j$(nproc) gd
 # 安装redis扩展
-RUN curl -fsSL 'https://pecl.php.net/get/redis-5.2.2.tgz' -o redis.tar.gz \
+RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.0.tgz' -o redis.tar.gz \
     && mkdir -p /tmp/redis \
     && tar -xf redis.tar.gz -C /tmp/redis --strip-components=1 \
     && rm redis.tar.gz \

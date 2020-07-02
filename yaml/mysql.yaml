@@ -31,17 +31,18 @@ data:
     relay_log_info_repository=TABLE
     binlog_checksum=NONE
     log_slave_updates=ON
+    log_bin=binlog
     binlog_format=ROW
     wait_timeout=6000 # 超时时间 如600秒
     max_connections=20000
     max_allowed_packet=1024M # 最大允许数据量
     #要同步的数据库
-    binlog-do-db = lishi 
+    #binlog-do-db = lishi 
     #不需要同步的数据库
-    binlog-ignore-db = mysql 
-    binlog_ignore_db = information_schema 
-    binlog_ignore_db = performance_schema 
-    binlog_ignore_db = sys
+    #binlog-ignore-db = mysql 
+    #binlog-ignore-db = information_schema 
+    #binlog-ignore-db = performance_schema 
+    #binlog-ignore-db = sys
     sync_binlog = 1
     binlog_expire_logs_seconds = 252000 # 二进制日志自动删除/过期的秒数。默认值为0，表示不自动删除。
     ######## 组复制设置 ########
@@ -52,7 +53,7 @@ data:
     # server启动时不自启组复制,为了避免每次启动自动引导具有相同名称的第二个组,所以设置为OFF。
     loose-group_replication_start_on_boot=off
     # 启动组server，种子server，加入组应该连接这些的ip和端口；其他server要加入组得由组成员同意
-    loose-group_replication_group_seeds="mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061"
+    # loose-group_replication_group_seeds="mysql-master-0.mysql:33061,mysql-master-1.mysql:33061,mysql-master-2.mysql:33061"
     loose-group_replication_bootstrap_group=off
     # 使用MGR的多主模式
     loose-group_replication_single_primary_mode=off # 单主模式on
@@ -145,6 +146,17 @@ spec:
       labels:
         app: mysql-master # 匹配 .spec.selector.matchLabels
     spec:
+      affinity: # 节点分布
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - node1
+                - node2
+                - node3
       initContainers:
       - name: init-mysql
         image: mysql
@@ -158,7 +170,7 @@ spec:
           [[ `hostname` =~ ([0-9]+)$ ]] || exit 1
           ordinal=${BASH_REMATCH[1]}
           whitelist='mysql-master-0.mysql'
-          for((i=1;i<$(REPLICAS);i++)); do
+          for((i=1;i<${REPLICAS};i++)); do
             whitelist="${whitelist}, mysql-master-${i}.mysql"
           done
           cat << EOF >> /etc/mysql/conf.d/server-id.cnf
@@ -169,12 +181,6 @@ spec:
           loose-group_replication_local_address="mysql-master-${ordinal}.mysql:33061" # 告诉插件使用IP地址，端口33061用于接收组中其他成员转入连接
           loose-group_replication_ip_whitelist="${whitelist}"
           EOF
-          # Copy appropriate conf.d files from config-map to emptyDir
-          if [[ $ordinal -eq 0 ]]; then
-            echo "log_bin" >> /etc/mysql/conf.d/server-id.cnf  # 主库打开binlog日志
-          else
-            echo "# super_read_only" >> /etc/mysql/conf.d/server-id.cnf  # 打开binlog日志
-          fi
           cp /mnt/config-map/my.cnf /etc/mysql/conf.d
         volumeMounts:
         - name: conf
@@ -257,8 +263,6 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: mysql-pvc
-        #hostPath: # 指向本地文件
-        #  path: /mnt/data/mysql
 ## mysql-shell
 ---
 apiVersion: v1

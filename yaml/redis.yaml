@@ -56,6 +56,17 @@ spec:
       labels:
         app: app-redis
     spec:
+      affinity: # 节点分布
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - node1
+                - node2
+                - node3
       containers:
         - name: redis
           image: redis:alpine
