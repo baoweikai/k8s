@@ -231,6 +231,15 @@ spec:
         - name: vhost
           hostPath: # 指向本地文件
             path: /mnt/k8s/etc/nginx/vhost
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: php-replacepathregex
+spec:
+  replacePathRegex:
+    regex: ^/(.*)
+    replacement: /index.php?s=/$1
 # 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1

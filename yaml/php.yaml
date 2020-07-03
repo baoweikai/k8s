@@ -19,7 +19,7 @@ data:
     ; 
     zlib.output_compression = Off
     ;zlib.output_compression_level = -1
-    ;zlib.output_handler =
+    ;zlib.output_handler = 
     implicit_flush = Off
     unserialize_callback_func =
     ;unserialize_max_depth = 4096
@@ -210,6 +210,15 @@ spec:
             name: php
 ---
 apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: php-replacepathregex
+spec:
+  replacePathRegex:
+    regex: ^/(.*)
+    replacement: /index.php?s=/$1
+---
+apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   # namespace: default
@@ -223,6 +232,11 @@ spec:
       services:
         - name: swoole
           port: 9501
+      #middlewares:
+        #- name: php-replacepathregex
+        # namespace: default
+        # A namespace specification such as above is ignored
+        # when the cross-provider syntax is used.
   tls:
     certResolver: default
     domains:
