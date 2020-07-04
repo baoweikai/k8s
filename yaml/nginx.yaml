@@ -239,7 +239,7 @@ metadata:
 spec:
   replacePathRegex:
     regex: ^/(.*)
-    replacement: /index.php?s=/$1
+    replacement: /index.html
 # 入口路由
 ---
 apiVersion: traefik.containo.us/v1alpha1
