@@ -209,16 +209,18 @@ metadata:
   name: traefik-route
 spec:
   entryPoints:
-    - https
+    - http
   routes:
     - match: Host(`traefik.ls.com`) ## traefik后台
       kind: Rule
       services:
         - name: traefik
           port: 8080
-  tls:
-    certResolver: default
-    domains:
-      - main: "ls.com"
-        sans:
-          - "traefik.ls.com"
+  #tls:
+  #  certResolver: default
+  #  domains:
+  #    - main: "ls.com"
+  #      sans:
+  #        - "traefik.ls.com"
+
+# kubectl label node node1 IngressProxy=true

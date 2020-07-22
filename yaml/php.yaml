@@ -105,7 +105,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete  
   storageClassName: local-storage  
   local:  
-    path: /mnt/www
+    path: /d/www
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -113,9 +113,10 @@ spec:
         - key: kubernetes.io/hostname
           operator: In # NotIn
           values:
-          - node1
-          - node2
-          - node3
+          - docker-desktop
+          #- node1
+          #- node2
+          #- node3
 # 内部服务端口
 ---
 apiVersion: v1
@@ -163,9 +164,10 @@ spec:
               - key: kubernetes.io/hostname
                 operator: In
                 values:
-                - node1
-                - node2
-                - node3
+                - docker-desktop
+                #- node1
+                #- node2
+                #- node3
       containers:
         - name: php
           image: registry.cn-beijing.aliyuncs.com/baoweikai/php ## php:fpm-alpine 自定义镜像
@@ -175,7 +177,6 @@ spec:
           #- name: registrypullsecret
           ports:
             - containerPort: 9501
-              # name: swoole
           command: [ "/bin/sh", "-c", "php /var/www/html/$(HTML_DIR)think swoole" ]
           env:
           - name: HTML_DIR
@@ -210,22 +211,13 @@ spec:
             name: php
 ---
 apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: php-replacepathregex
-spec:
-  replacePathRegex:
-    regex: ^/(.*)
-    replacement: /index.php?s=/$1
----
-apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   # namespace: default
   name: swoole-route
 spec:
   entryPoints:
-    - https
+    - http
   routes:
     - match: Host(`api.ls.com`) # 首页
       kind: Rule
@@ -237,9 +229,11 @@ spec:
         # namespace: default
         # A namespace specification such as above is ignored
         # when the cross-provider syntax is used.
-  tls:
-    certResolver: default
-    domains:
-      - main: "ls.com"
-        sans:
-          - "api.ls.com"
+
+## openssl 命令生成 CA 证书
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mysql.ls.com"
+## 创建secret对象来存储证书 # kubectl create secret mysql-tls 删除
+# kubectl create secret tls default --cert=tls.crt --key=tls.key
+
+
+## openssl req -new -sha256 -out tls.csr -key ca.key -config ca.conf
