@@ -25,8 +25,8 @@ yum install -y yum-utils \
 device-mapper-persistent-data \
 lvm2
 yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
-# 安装并启动 docker
-yum install -y docker-ce docker-ce-cli containerd.io
+# 安装并启动 docker https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.13-3.2.el7.x86_64.rpm
+yum install -y containerd.io docker-ce docker-ce-cli
 systemctl enable docker
 systemctl start docker
 # 安装 nfs-utils

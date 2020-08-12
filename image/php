@@ -22,7 +22,7 @@ RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.1.tgz' -o redis.tar.gz \
     && docker-php-ext-install /tmp/redis \
     && rm -r /tmp/redis
 # 安装mongodb扩展
-RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.8.0RC1.tgz' -o mongodb.tar.gz \
+RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.8.0.tgz' -o mongodb.tar.gz \
     && mkdir -p /tmp/mongodb \
     && tar -xf mongodb.tgz -C /tmp/mongodb --strip-components=1 \
     && rm mongodb.tgz \
