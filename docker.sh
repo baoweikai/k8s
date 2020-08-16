@@ -4,8 +4,9 @@ docker network craete -d bridge network
 ### php
 docker run -d --name swoole --net network \
 -p 9000:9000 -p 9501:9501 \
--v 'd:/www':/var/www:rw \
--v 'd:/k8s/etc/php/php.ini':/usr/local/etc/php/php.ini baoweikai/php
+-v 'd:/www/ls/api':/var/www:rw \
+-v 'd:/k8s/etc/php/php.ini':/usr/local/etc/php/php.ini baoweikai/php \
+'php /var/www/think swoole &'
 ### nginx
 docker run -d --name nginx --net network \
 -p 80:80 -p 443:443 \
