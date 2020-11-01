@@ -14,7 +14,7 @@ RUN apk add --no-cache freetype-dev libpng-dev libjpeg-turbo-dev \
 		&& docker-php-ext-configure gd --with-freetype --with-jpeg \
 		&& docker-php-ext-install -j$(nproc) gd
 # 安装redis扩展
-RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.1.tgz' -o redis.tgz \
+RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.2.tgz' -o redis.tgz \
     && mkdir -p /tmp/redis \
     && tar -xf redis.tgz -C /tmp/redis --strip-components=1 \
     && rm redis.tgz \
@@ -22,7 +22,7 @@ RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.1.tgz' -o redis.tgz \
     && docker-php-ext-install /tmp/redis \
     && rm -r /tmp/redis
 # 安装mongodb扩展
-RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.8.0.tgz' -o mongodb.tgz \
+RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.8.1.tgz' -o mongodb.tgz \
     && mkdir -p /tmp/mongodb \
     && tar -xf mongodb.tgz -C /tmp/mongodb --strip-components=1 \
     && rm mongodb.tgz \
@@ -30,9 +30,9 @@ RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.8.0.tgz' -o mongodb.tgz \
     && docker-php-ext-install /tmp/mongodb \
     && rm -r /tmp/mongodb
 # 安装swoole扩展
-RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.5.3.tgz' -o swoole.tgz \
+RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.5.6.tgz' -o swoole.tgz \
     && tar -xf swoole.tgz -C /tmp \
-    && rm swoole.tgz && mv /tmp/swoole-4.5.3 /tmp/swoole \
+    && rm swoole.tgz && mv /tmp/swoole-4.5.6 /tmp/swoole \
     && docker-php-ext-configure /tmp/swoole --enable-openssl --with-openssl-dir=/usr/lib/ --with-php-config=/usr/local/bin/php-config --enable-http2 \
     && docker-php-ext-install /tmp/swoole \
     && rm -r /tmp/swoole
