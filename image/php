@@ -45,3 +45,12 @@ RUN curl -fsSL 'http://pecl.php.net/get/zip-1.19.2.tgz' -o zip.tgz \
     && docker-php-ext-configure /tmp/zip --enable-zip \
     && docker-php-ext-install /tmp/zip \
     && rm -r /tmp/zip
+		
+RUN curl -fsSL 'https://pecl.php.net/get/inotify-3.0.0.tgz' -o inotify.tgz \
+    && mkdir -p /tmp/inotify \
+    && tar -xf inotify.tgz -C /tmp/inotify --strip-components=1 \
+    && rm inotify.tgz \
+    && docker-php-ext-configure /tmp/inotify --enable-inotify \
+    && docker-php-ext-install /tmp/inotify \
+    && rm -r /tmp/inotify
+

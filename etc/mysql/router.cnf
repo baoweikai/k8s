@@ -1,0 +1,51 @@
+# File automatically generated during MySQL Router bootstrap
+[DEFAULT]
+logging_folder=/var/log/myrouter
+runtime_folder=/var/run/myrouter
+data_folder=/var/lib/myrouter
+keyring_path=/var/lib/myrouter/keyring
+master_key_path=/opt/routers/myrouter/mysqlrouter.key
+connect_timeout=30
+read_timeout=30
+
+[logger]
+level = INFO
+
+[metadata_cache:mycluster]
+router_id=5
+bootstrap_server_addresses=mysql://mysql-0.mysql:3310,mysql://mysql-1.mysql:3320,mysql://mysql-2.mysql:3330
+user=mysql_router5_6owf3spq1c6n
+metadata_cluster=mycluster
+ttl=5
+
+[routing:masters]
+bind_address=0.0.0.0
+bind_port=7001
+destinations=mysql-0.mysql:3306 # 指定后端mysql server 列表
+routing_strategy=round-robin
+protocol=classic
+mode=read-write
+
+[routing:slaves]
+bind_address=0.0.0.0 # 指定绑定的端口
+bind_port=7002 # 指定绑定的端口
+destinations=mysql-0.mysql:3306,mysql-1.mysql:3306,mysql-2.mysql:3306 # 指定后端mysql server 列表
+routing_strategy=round-robin 
+protocol=classic
+mode=read-only # 指定该服务只能做read操作
+
+[routing:mycluster_default_x_rw]
+bind_address=0.0.0.0
+bind_port=64460
+destinations=metadata-cache://mycluster/default?role=PRIMARY
+routing_strategy=round-robin
+protocol=x
+mode=read-write
+
+[routing:mycluster_default_x_ro]
+bind_address=0.0.0.0
+bind_port=64470
+destinations=metadata-cache://mycluster/default?role=SECONDARY
+routing_strategy=round-robin
+protocol=x
+mode=read-only
