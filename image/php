@@ -1,5 +1,5 @@
-## 基于php:alpine创建镜像,可自行替换centos或其他
-FROM php:fpm-alpine
+## 基于php:alpine创建镜像,可自行替换centos或其他 ##7-fpm-alpine
+FROM php:7-fpm-alpine
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories # 修改软件源为阿里云镜像
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" # 配置文件
 RUN apk update # 更新软件包
