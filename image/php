@@ -32,7 +32,7 @@ RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.9.0.tgz' -o mongodb.tgz \
 # 安装swoole扩展
 RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.6.1.tgz' -o swoole.tgz \
     && tar -xf swoole.tgz -C /tmp \
-    && rm swoole.tgz && mv /tmp/swoole-4.5.10 /tmp/swoole \
+    && rm swoole.tgz && mv /tmp/swoole-4.6.1 /tmp/swoole \
     && docker-php-ext-configure /tmp/swoole --enable-openssl --with-openssl-dir=/usr/lib/ --with-php-config=/usr/local/bin/php-config --enable-http2 \
     && docker-php-ext-install /tmp/swoole \
     && rm -r /tmp/swoole
