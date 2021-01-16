@@ -22,29 +22,30 @@ RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.2.tgz' -o redis.tgz \
     && docker-php-ext-install /tmp/redis \
     && rm -r /tmp/redis
 # 安装mongodb扩展
-RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.9.0.tgz' -o mongodb.tgz \
-    && mkdir -p /tmp/mongodb \
-    && tar -xf mongodb.tgz -C /tmp/mongodb --strip-components=1 \
-    && rm mongodb.tgz \
-    && docker-php-ext-configure /tmp/mongodb --with-mongodb-ssl=auto \
-    && docker-php-ext-install /tmp/mongodb \
-    && rm -r /tmp/mongodb
+#RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.9.0.tgz' -o mongodb.tgz \
+#    && mkdir -p /tmp/mongodb \
+#    && tar -xf mongodb.tgz -C /tmp/mongodb --strip-components=1 \
+#    && rm mongodb.tgz \
+#    && docker-php-ext-configure /tmp/mongodb --with-mongodb-ssl=auto \
+#    && docker-php-ext-install /tmp/mongodb \
+#    && rm -r /tmp/mongodb
 # 安装swoole扩展
-RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.6.1.tgz' -o swoole.tgz \
+## https://pecl.php.net/get/swoole-4.6.1.tgz # 4.5.3 之后版本有问题
+RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.5.3.tgz' -o swoole.tgz \
     && tar -xf swoole.tgz -C /tmp \
-    && rm swoole.tgz && mv /tmp/swoole-4.6.1 /tmp/swoole \
+    && rm swoole.tgz && rm -fr /tmp/swoole && mv /tmp/swoole-4.5.3 /tmp/swoole \
     && docker-php-ext-configure /tmp/swoole --enable-openssl --with-openssl-dir=/usr/lib/ --with-php-config=/usr/local/bin/php-config --enable-http2 \
     && docker-php-ext-install /tmp/swoole \
     && rm -r /tmp/swoole
 # 安装zip扩展
-RUN apk add libzip libzip-dev
-RUN curl -fsSL 'http://pecl.php.net/get/zip-1.19.2.tgz' -o zip.tgz \
-    && mkdir -p /tmp/zip \
-    && tar -xf zip.tgz -C /tmp/zip --strip-components=1 \
-    && rm zip.tgz \
-    && docker-php-ext-configure /tmp/zip --enable-zip \
-    && docker-php-ext-install /tmp/zip \
-    && rm -r /tmp/zip
+#RUN apk add libzip libzip-dev
+#RUN curl -fsSL 'http://pecl.php.net/get/zip-1.19.2.tgz' -o zip.tgz \
+#    && mkdir -p /tmp/zip \
+#    && tar -xf zip.tgz -C /tmp/zip --strip-components=1 \
+#    && rm zip.tgz \
+#    && docker-php-ext-configure /tmp/zip --enable-zip \
+#    && docker-php-ext-install /tmp/zip \
+#    && rm -r /tmp/zip
 		
 RUN curl -fsSL 'https://pecl.php.net/get/inotify-3.0.0.tgz' -o inotify.tgz \
     && mkdir -p /tmp/inotify \
