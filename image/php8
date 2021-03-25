@@ -1,0 +1,57 @@
+## 基于php:alpine创建镜像,可自行替换centos或其他 ##7-fpm-alpine
+FROM php:fpm-alpine
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories # 修改软件源为阿里云镜像
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" # 配置文件
+RUN apk update # 更新软件包
+# Override with custom opcache settings
+# COPY config/opcache.ini $PHP_INI_DIR/conf.d/  # 缓存配置
+## 依赖库
+RUN apk add openssl openssl-dev libstdc++ libtool zlib zlib-dev curl-dev
+# 安装 pdo_mysql
+RUN docker-php-ext-install pdo_mysql bcmath pcntl # mysqli, bcmath浮点数的运算
+# 安装及配置支持的类型，然后安装gd库
+RUN apk add --no-cache freetype-dev libpng-dev libjpeg-turbo-dev \
+		&& docker-php-ext-configure gd --with-freetype --with-jpeg \
+		&& docker-php-ext-install -j$(nproc) gd
+# 安装redis扩展
+RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.4.tgz' -o redis.tgz \
+    && mkdir -p /tmp/redis \
+    && tar -xf redis.tgz -C /tmp/redis --strip-components=1 \
+    && rm redis.tgz \
+    && docker-php-ext-configure /tmp/redis \
+    && docker-php-ext-install /tmp/redis \
+    && rm -r /tmp/redis
+# 安装mongodb扩展
+#RUN curl -fsSL 'https://pecl.php.net/get/mongodb-1.9.0.tgz' -o mongodb.tgz \
+#    && mkdir -p /tmp/mongodb \
+#    && tar -xf mongodb.tgz -C /tmp/mongodb --strip-components=1 \
+#    && rm mongodb.tgz \
+#    && docker-php-ext-configure /tmp/mongodb --with-mongodb-ssl=auto \
+#    && docker-php-ext-install /tmp/mongodb \
+#    && rm -r /tmp/mongodb
+# 安装swoole扩展
+## https://pecl.php.net/get/swoole-4.6.4.tgz # 4.5.3 之后版本有问题
+RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.6.4.tgz' -o swoole.tgz \
+    && tar -xf swoole.tgz -C /tmp \
+    && rm swoole.tgz && rm -fr /tmp/swoole && mv /tmp/swoole-4.6.4 /tmp/swoole \
+    && docker-php-ext-configure /tmp/swoole --enable-openssl --with-openssl-dir=/usr/lib/ --with-php-config=/usr/local/bin/php-config --enable-http2 --enable-swoole-curl \
+    && docker-php-ext-install /tmp/swoole \
+    && rm -r /tmp/swoole
+# 安装zip扩展
+#RUN apk add libzip libzip-dev
+#RUN curl -fsSL 'http://pecl.php.net/get/zip-1.19.2.tgz' -o zip.tgz \
+#    && mkdir -p /tmp/zip \
+#    && tar -xf zip.tgz -C /tmp/zip --strip-components=1 \
+#    && rm zip.tgz \
+#    && docker-php-ext-configure /tmp/zip --enable-zip \
+#    && docker-php-ext-install /tmp/zip \
+#    && rm -r /tmp/zip
+		
+RUN curl -fsSL 'https://pecl.php.net/get/inotify-3.0.0.tgz' -o inotify.tgz \
+    && mkdir -p /tmp/inotify \
+    && tar -xf inotify.tgz -C /tmp/inotify --strip-components=1 \
+    && rm inotify.tgz \
+    && docker-php-ext-configure /tmp/inotify --enable-inotify \
+    && docker-php-ext-install /tmp/inotify \
+    && rm -r /tmp/inotify
+
