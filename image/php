@@ -30,10 +30,10 @@ RUN curl -fsSL 'https://pecl.php.net/get/redis-5.3.2.tgz' -o redis.tgz \
 #    && docker-php-ext-install /tmp/mongodb \
 #    && rm -r /tmp/mongodb
 # 安装swoole扩展
-## https://pecl.php.net/get/swoole-4.6.4.tgz # 4.5.3 之后版本有问题
-RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.6.4.tgz' -o swoole.tgz \
+## https://pecl.php.net/get/swoole-4.6.6.tgz # 4.5.3 之后版本有问题
+RUN curl -fsSL 'https://pecl.php.net/get/swoole-4.6.6.tgz' -o swoole.tgz \
     && tar -xf swoole.tgz -C /tmp \
-    && rm swoole.tgz && rm -fr /tmp/swoole && mv /tmp/swoole-4.6.4 /tmp/swoole \
+    && rm swoole.tgz && rm -fr /tmp/swoole && mv /tmp/swoole-4.6.6 /tmp/swoole \
     && docker-php-ext-configure /tmp/swoole --enable-openssl --with-openssl-dir=/usr/lib/ --with-php-config=/usr/local/bin/php-config --enable-http2 --enable-swoole-curl \
     && docker-php-ext-install /tmp/swoole \
     && rm -r /tmp/swoole
